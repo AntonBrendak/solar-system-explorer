@@ -1,0 +1,71 @@
+:root {
+  color-scheme: dark;
+  --page: #030712;
+  --blue: #9ed3ff;
+  --muted: #9baec8;
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  margin: 0;
+  background: var(--page);
+  color: #f5f9ff;
+  font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+a {
+  text-decoration: none;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+::selection {
+  background: rgba(154, 207, 255, 0.33);
+  color: white;
+}
+:focus-visible {
+  outline: 2px solid #94d8ff !important;
+  outline-offset: 5px !important;
+}
+.font-display {
+  font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+}
+.page-container {
+  width: min(calc(100% - 112px), 1450px);
+  margin-inline: auto;
+}
+.mono-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  line-height: 1.5;
+  color: #a1b4cd;
+}
+.eyebrow-line {
+  display: inline-block;
+  width: 32px;
+  height: 1px;
+  flex-shrink: 0;
+  background: linear-gradient(90deg, #7dbbff, #e2f0ff);
+  box-shadow: 0 0 12px rgba(134, 204, 255, 0.5);
+}
+.hero-accent {
+  color: #bddfff;
+  background: linear-gradient(105deg, #d3ebff 0%, #86bde8 55%, #5b91bf 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}

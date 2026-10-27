@@ -1,0 +1,126 @@
+.hero-selector-wrap {
+  margin-top: 3px;
+}
+.destination-selector {
+  min-height: 123px;
+  padding: 0 22px 0 30px;
+  background: linear-gradient(
+    110deg,
+    rgba(15, 29, 48, 0.82),
+    rgba(9, 19, 36, 0.8)
+  );
+  border: 1px solid rgba(136, 178, 222, 0.21);
+  box-shadow:
+    inset 0 1px 0 rgba(188, 211, 251, 0.045),
+    0 20px 70px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(20px);
+  border-radius: 6px;
+  display: flex;
+  align-items: stretch;
+  gap: 15px;
+}
+.destination-label {
+  width: 173px;
+  flex: 0 0 173px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  border-right: 1px solid rgba(125, 160, 198, 0.19);
+}
+.planet-list {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 2px;
+}
+.planet-picker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1 1 0;
+  min-width: 67px;
+  gap: 4px;
+  color: #8094ae;
+  transition: color 0.3s ease;
+  padding-top: 9px;
+}
+.picker-planet-wrap {
+  display: block;
+  width: 48px;
+  height: 48px;
+  filter: grayscale(0.25) brightness(0.78);
+  transition:
+    transform 0.4s ease,
+    filter 0.4s ease;
+}
+.planet-picker-name {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.015em;
+}
+.planet-picker:hover,
+.planet-picker-active {
+  color: #ebf7ff;
+}
+.planet-picker:hover .picker-planet-wrap,
+.planet-picker-active .picker-planet-wrap {
+  transform: translateY(-4px) scale(1.12);
+  filter: grayscale(0) brightness(1.12)
+    drop-shadow(0 0 12px rgba(139, 195, 255, 0.32));
+}
+.planet-picker-active-line {
+  position: absolute;
+  width: 0;
+  height: 2px;
+  background: #9bdcff;
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 0 12px #8dc7ff;
+  transition: width 0.3s ease;
+}
+.planet-picker-active .planet-picker-active-line {
+  width: 43px;
+}
+.destination-controls {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-left: 16px;
+  border-left: 1px solid rgba(125, 160, 198, 0.19);
+}
+.selector-arrow {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(129, 169, 207, 0.26);
+  border-radius: 50%;
+  color: #d9eaff;
+  display: grid;
+  place-items: center;
+  transition:
+    background 0.25s,
+    border-color 0.25s;
+}
+.selector-arrow:hover {
+  background: rgba(155, 206, 255, 0.14);
+  border-color: #93c7ff;
+}
+.motion-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #8194af;
+  font:
+    9px ui-monospace,
+    monospace;
+  letter-spacing: 0.15em;
+  transition: color 0.2s;
+}
+.motion-control:hover {
+  color: #d8ecff;
+}

@@ -1,0 +1,131 @@
+.site-header {
+  border-bottom: 1px solid rgba(122, 159, 199, 0.105);
+}
+.logo-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 13px;
+  position: relative;
+}
+.logo-symbol {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 35px;
+  height: 35px;
+  border: 1px solid rgba(173, 216, 255, 0.65);
+  border-radius: 50%;
+}
+.logo-orbit {
+  position: absolute;
+  width: 47px;
+  height: 15px;
+  border: 1px solid #a4d3ff;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.logo-orbit-one {
+  transform: rotate(-35deg);
+}
+.logo-orbit-two {
+  transform: rotate(40deg);
+  opacity: 0.45;
+}
+.logo-satellite-track {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-35deg);
+  pointer-events: none;
+}
+.logo-satellite {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #e4f4ff;
+  box-shadow: 0 0 8px #9ed3ff;
+  offset-path: ellipse(23.5px 7.5px at 17.5px 17.5px);
+  offset-distance: 0%;
+}
+.logo-symbol-core {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #c7e6ff;
+  box-shadow: 0 0 15px #9ed3ff70;
+}
+.nav-link {
+  position: relative;
+  padding-block: 12px;
+  color: #9baec8;
+  font-size: 12px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.nav-link:hover,
+.nav-link-active {
+  color: #e7f4ff;
+}
+.nav-link-active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #a6d7ff;
+  box-shadow: 0 0 10px #8bc8ff70;
+  transform: translateX(-50%);
+}
+.nav-link:not(.nav-link-active)::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 4px;
+  height: 1px;
+  background: #9ed3ff;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.25s ease;
+}
+.nav-link:not(.nav-link-active):hover::after,
+.nav-link:not(.nav-link-active):focus-visible::after {
+  transform: scaleX(1);
+}
+.header-launch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  min-height: 42px;
+  padding: 10px 18px;
+  border: 1px solid rgba(155, 198, 238, 0.35);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #d6ebff;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+.header-launch:hover {
+  background: rgba(155, 206, 255, 0.08);
+  border-color: #9bcaff;
+}
+.mobile-menu-toggle {
+  position: relative;
+  z-index: 60;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: #d5eaff;
+}
+.mobile-nav {
+  background: rgba(3, 7, 18, 0.98);
+  backdrop-filter: blur(24px);
+}

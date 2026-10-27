@@ -1,0 +1,309 @@
+@media (max-width: 1280px) {
+  .page-container {
+    width: min(calc(100% - 80px), 1450px);
+  }
+  .hero-heading {
+    font-size: clamp(64px, 8.8vw, 112px);
+  }
+  .planet-stage {
+    right: -11%;
+    width: 67vw;
+  }
+  .hero-planet-info {
+    right: -10px;
+    bottom: 44px;
+  }
+  .destination-label {
+    flex-basis: 150px;
+    width: 150px;
+  }
+  .picker-planet-wrap {
+    width: 42px;
+    height: 42px;
+  }
+  .destination-selector {
+    padding-left: 23px;
+    padding-right: 16px;
+    gap: 8px;
+  }
+  .feature-card {
+    min-height: 460px;
+  }
+}
+@media (max-width: 1023px) {
+  .page-container {
+    width: min(calc(100% - 60px), 1450px);
+  }
+  .hero-main {
+    height: 690px;
+  }
+  .hero-heading {
+    font-size: clamp(60px, 10vw, 95px);
+  }
+  .hero-content {
+    width: 75%;
+  }
+  .planet-stage {
+    width: 760px;
+    right: -340px;
+    top: 0;
+    opacity: 0.8;
+  }
+  .hero-planet-info {
+    bottom: 48px;
+    right: 0;
+  }
+  .destination-label {
+    display: none;
+  }
+  .destination-selector {
+    padding: 0 12px;
+  }
+  .destination-controls {
+    padding-left: 8px;
+  }
+  .planet-picker {
+    min-width: 60px;
+  }
+  .feature-card {
+    min-height: 430px;
+    padding: 21px 20px 25px;
+  }
+  .feature-visual {
+    top: 75px;
+  }
+  .feature-planet {
+    width: 245px;
+    height: 245px;
+  }
+  .feature-spin {
+    width: 245px;
+    height: 245px;
+  }
+  .feature-saturn .feature-spin {
+    width: 205px;
+    height: 205px;
+  }
+  .feature-saturn .feature-planet {
+    width: 205px;
+    height: 205px;
+  }
+}
+@media (max-width: 767px) {
+  .page-container {
+    width: calc(100% - 40px);
+  }
+  .site-header .page-container {
+    height: 76px;
+  }
+  .site-header .header-launch {
+    display: none;
+  }
+  .hero-section {
+    padding-top: 76px;
+  }
+  .hero-main {
+    height: 820px;
+  }
+  .hero-content {
+    padding-top: 65px;
+    width: 100%;
+  }
+  .hero-content [data-hero-eyebrow] {
+    margin-bottom: 23px;
+  }
+  .hero-heading {
+    font-size: clamp(53px, 12.5vw, 91px);
+    line-height: 0.92;
+  }
+  .hero-content [data-hero-summary] {
+    margin-top: 22px;
+    max-width: 360px;
+  }
+  .hero-content [data-hero-summary] p {
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .hero-content [data-hero-actions] {
+    margin-top: 24px;
+    gap: 11px;
+  }
+  .primary-button {
+    font-size: 11px;
+    min-height: 51px;
+    padding-left: 16px;
+    gap: 14px;
+  }
+  .primary-button-icon {
+    width: 39px;
+    height: 39px;
+  }
+  .text-button {
+    font-size: 11px;
+  }
+  .play-icon {
+    width: 39px;
+    height: 39px;
+  }
+  .planet-stage {
+    width: 600px;
+    height: 520px;
+    right: calc(50% - 330px);
+    top: 360px;
+    opacity: 0.95;
+  }
+  .planet-float {
+    width: 72%;
+    top: 48%;
+  }
+  .planet-halo {
+    top: 48%;
+  }
+  .orbit-circle {
+    top: 47%;
+  }
+  .hero-planet-info {
+    right: 0;
+    bottom: 10px;
+    width: 190px;
+    padding-left: 13px;
+  }
+  .hero-planet-info p:nth-child(2) {
+    font-size: 24px;
+  }
+  .hero-planet-info p:nth-child(3) {
+    font-size: 10px;
+  }
+  .hero-planet-info > div:last-child {
+    display: none;
+  }
+  .hero-selector-wrap {
+    margin-top: 7px;
+  }
+  .destination-selector {
+    height: 109px;
+    min-height: 109px;
+    padding: 0 10px;
+  }
+  .planet-list {
+    overflow-x: auto;
+    justify-content: start;
+    scrollbar-width: none;
+  }
+  .planet-list::-webkit-scrollbar {
+    display: none;
+  }
+  .planet-picker {
+    flex: 0 0 70px;
+    min-width: 70px;
+  }
+  .picker-planet-wrap {
+    width: 43px;
+    height: 43px;
+  }
+  .destination-controls {
+    display: none;
+  }
+  .destinations-section,
+  .experience-section {
+    padding-block: 80px;
+  }
+  .section-heading {
+    font-size: clamp(46px, 9.5vw, 73px);
+  }
+  .feature-grid {
+    grid-template-columns: 1fr;
+    gap: 17px;
+  }
+  .feature-card {
+    min-height: 400px;
+  }
+  .feature-visual {
+    top: 50px;
+  }
+  .feature-planet {
+    height: 275px;
+    width: 275px;
+  }
+  .feature-spin {
+    width: 275px;
+    height: 275px;
+  }
+  .feature-saturn .feature-spin {
+    width: 235px;
+    height: 235px;
+  }
+  .feature-saturn .feature-planet {
+    height: 235px;
+    width: 235px;
+  }
+  .feature-saturn-ring {
+    left: 20%;
+    width: 60%;
+  }
+  .experience-section .experience-stats {
+    margin-top: 60px;
+  }
+  .stat-item {
+    padding-left: 17px;
+  }
+  .stat-item:nth-child(odd) {
+    padding-left: 0;
+  }
+  .stat-item:nth-child(2) {
+    border-right: 0;
+  }
+  .footer-section .page-container {
+    align-items: flex-start;
+  }
+}
+@media (max-width: 425px) {
+  .hero-heading {
+    font-size: clamp(45px, 12.6vw, 61px);
+  }
+  .hero-main {
+    height: 770px;
+  }
+  .hero-content {
+    padding-top: 57px;
+  }
+  .planet-stage {
+    width: 520px;
+    height: 465px;
+    right: calc(50% - 290px);
+    top: 342px;
+  }
+  .hero-planet-info {
+    bottom: 12px;
+    right: 2px;
+    width: 138px;
+  }
+  .planet-caption {
+    display: none;
+  }
+  .hero-content [data-hero-actions] {
+    align-items: flex-start;
+  }
+  .hero-content [data-hero-actions] .text-button {
+    gap: 7px;
+  }
+  .text-button .play-icon {
+    width: 35px;
+    height: 35px;
+  }
+  .feature-card {
+    min-height: 390px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
