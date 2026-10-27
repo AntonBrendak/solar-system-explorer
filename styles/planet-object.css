@@ -1,0 +1,42 @@
+.planet-object,
+.planet-image-spin {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.planet-model {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.planet-model[data-active="true"][data-ready="true"] {
+  visibility: visible;
+}
+
+.planet-model[data-active="true"][data-interactive="true"] {
+  pointer-events: auto;
+}
+
+/* Keep the image spin layer mounted so GSAP survives planet changes. */
+.planet-object:has(> .planet-model[data-active="true"][data-ready="true"]) > .planet-image-spin {
+  visibility: hidden;
+}
+
+.planet-object-credits {
+  position: absolute;
+  z-index: 1;
+  bottom: 12px;
+  left: 16px;
+  right: 16px;
+  color: #9baec8;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.planet-object-credits:hover {
+  color: white;
+}

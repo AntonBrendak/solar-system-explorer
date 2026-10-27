@@ -2,6 +2,7 @@
 @import "tailwindcss";
 @import "../styles/base.css";
 @import "../styles/header.css";
+@import "../styles/planet-object.css";
 @import "../styles/hero.css";
 @import "../styles/planet-selector.css";
 @import "../styles/sections.css";

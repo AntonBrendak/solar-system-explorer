@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/AntonBrendak/solar-system-explorer/actions/workflows/ci.yml/badge.svg)](https://github.com/AntonBrendak/solar-system-explorer/actions/workflows/ci.yml)
 
-A cinematic, interactive Solar System Explorer with an animated eight-planet homepage and a separate 3D Earth laboratory. Built with Next.js App Router, React, TypeScript, Tailwind CSS v4, GSAP, Three.js, and React Three Fiber.
+A cinematic, interactive Solar System Explorer with an animated eight-planet homepage, a live 3D Earth, and a model laboratory. Built with Next.js App Router, React, TypeScript, Tailwind CSS v4, GSAP, Three.js, and React Three Fiber.
 
 ## Development
 
@@ -20,7 +20,7 @@ Open <http://localhost:3000>. For a production preview, run `npm run build`, the
 | `/`           | Eight-planet explorer, animated hero, destination cards, and mission section      |
 | `/planet-lab` | WebGL Earth preview with rotating surface, clouds, atmosphere, and orbit controls |
 
-The 3D laboratory requires a browser with WebGL support. No API keys or backend services are required.
+3D models require WebGL; artwork is used while loading and if WebGL is unavailable. Earth uses public cloud imagery and server routes for precipitation and lightning. No API keys are required. The optional NOAA lightning feed is supplied by `scripts/fetch-noaa-lightning.py`.
 
 ## Project structure
 
@@ -41,8 +41,9 @@ components/
     FeaturedDestinations.tsx Three original destination cards
     ExperienceSection.tsx   Experience copy and statistics
     SiteFooter.tsx           Footer and back-to-top link
+  planets/                   Persistent Canvas, scene cache, preview/full registry
   planetPreview/
-    EarthPreview.tsx         WebGL canvas, Earth surface, lighting, orbit controls
+    EarthPreview.tsx         Full Earth scene content (uses the shared Canvas)
   earth/                     Atmosphere, clouds, and procedural ocean normal map
 hooks/
   useSolarHomepage.ts        State, entrance/transition GSAP sequences, and handlers
@@ -67,11 +68,13 @@ docs/
   architecture.md            Component ownership and refactoring conventions
 ```
 
-The `@/` import alias resolves from the project root. See [the architecture guide](docs/architecture.md) for component responsibilities, animation contracts, and team review checks.
+The `@/` import alias resolves from the project root. See [the architecture guide](docs/architecture.md) for component responsibilities, animation contracts, and team review checks. See [planet visuals](docs/planet-models.md) to register another 3D object without editing page sections.
 
 ## Existing behavior
 
 - Earth is selected initially; all eight planets can be selected.
+- Selecting Earth displays the same 3D scene as `/planet-lab`, with live clouds, precipitation shading, night lights and a slow camera orbit. A lightweight preview upgrades inside the same Canvas. Selector previews rotate around their axes without loading detailed scenes.
+- WebGL is deferred until after the interface paints. Visited scenes keep their GPU resources in one Canvas per display frame, so returning to a planet does not rebuild its model. Inactive scenes pause; texture preparation yields between uploads. Earth uses prepared runtime textures rather than the large source maps.
 - Previous/next controls wrap between Mercury and Neptune.
 - Featured cards select Mars, Saturn, or Neptune and return to the hero.
 - “Explore all eight planets” starts with Mercury.
@@ -80,7 +83,7 @@ The `@/` import alias resolves from the project root. See [the architecture guid
 - Planets rotate continuously in the hero, selector, and destination cards. Separate spin layers preserve the existing hover and floating effects; Saturn's rings keep their orientation.
 - The logo has rotating orbital rings, an orbiting satellite, and a pulsing core. Light particles follow the hero's orbit lines; the nebulae and planet halo drift and pulse.
 - Statistics enter with a stagger; navigation links and primary buttons have hover/focus effects.
-- The motion control pauses CSS and GSAP ambient animations without resetting their positions. Hidden tabs pause GSAP loops; reduced-motion changes disable them immediately.
+- The motion control pauses CSS, GSAP and the 3D render loop without resetting their positions. Hidden tabs and reduced motion also stop continuous 3D rendering.
 - Planet artwork is local and requires no external image API.
 
 ## Validation

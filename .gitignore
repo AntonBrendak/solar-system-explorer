@@ -13,3 +13,4 @@ coverage/
 .idea/
 Thumbs.db
 Desktop.ini
+data/noaa-lightning.json

@@ -1,11 +1,11 @@
-import Image from "next/image";
+import { PlanetVisual } from "@/components/planets/PlanetVisual";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { featuredPlanetIds, planets } from "@/data/planets";
 import type { SolarHomepageState } from "@/hooks/useSolarHomepage";
 
-type Props = Pick<SolarHomepageState, "selectPlanet">;
+type Props = Pick<SolarHomepageState, "selectPlanet" | "motionPaused">;
 
-export function FeaturedDestinations({ selectPlanet }: Props) {
+export function FeaturedDestinations({ selectPlanet, motionPaused }: Props) {
   return (
     <section
       id="planets"
@@ -55,18 +55,11 @@ export function FeaturedDestinations({ selectPlanet }: Props) {
                   </span>
                 </div>
                 <div className="feature-visual">
-                  {id === "saturn" && (
-                    <span className="feature-saturn-ring" aria-hidden="true" />
-                  )}
-                  <span className="feature-spin">
-                    <Image
-                      src={featured.image}
-                      alt=""
-                      width={360}
-                      height={360}
-                      className="feature-planet"
-                    />
-                  </span>
+                  <PlanetVisual
+                    planet={featured}
+                    presentation="card"
+                    motionPaused={motionPaused}
+                  />
                 </div>
                 <div className="relative z-10">
                   <span className="mb-3 block font-mono text-[10px] font-medium tracking-[0.2em] text-[#a0afc4]">

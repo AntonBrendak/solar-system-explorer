@@ -1,9 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, Pause, Play } from "lucide-react";
 import { Starfield } from "./Starfield";
 import { PlanetSelector } from "./PlanetSelector";
 import type { SolarHomepageState } from "@/hooks/useSolarHomepage";
+import { PlanetVisual } from "@/components/planets/PlanetVisual";
 
 type Props = Pick<
   SolarHomepageState,
@@ -28,8 +28,6 @@ export function HeroSection({
   informationRef,
   motionPaused,
   setMotionPaused,
-  handlePointerMove,
-  handlePointerLeave,
 }: Props) {
   return (
     <section id="home" className="hero-section relative isolate pt-[98px]">
@@ -39,7 +37,7 @@ export function HeroSection({
         aria-hidden="true"
       />
       <div className="page-container hero-main relative z-10">
-        <div className="hero-content relative z-20">
+        <div className="hero-content relative z-20 pointer-events-none">
           <div data-hero-eyebrow className="mb-8 flex items-center gap-3.5">
             <span className="eyebrow-line" />
             <span className="mono-label">BEYOND THE ORDINARY / VOL. 001</span>
@@ -73,7 +71,7 @@ export function HeroSection({
           </div>
           <div
             data-hero-actions
-            className="mt-9 flex flex-wrap items-center gap-5"
+            className="mt-9 flex flex-wrap items-center gap-5 pointer-events-auto"
           >
             <Link href="#planets" className="primary-button group">
               <span>Begin exploration</span>
@@ -96,8 +94,6 @@ export function HeroSection({
         <div
           data-planet-stage
           className="planet-stage"
-          onPointerMove={handlePointerMove}
-          onPointerLeave={handlePointerLeave}
         >
           <div className="orbit-circle orbit-circle-one" aria-hidden="true">
             <span className="orbit-traveler orbit-traveler-one" />
@@ -118,30 +114,12 @@ export function HeroSection({
               ref={planetContentRef}
               className={`planet-visual planet-${planet.id}`}
             >
-              {planet.id === "saturn" && (
-                <span
-                  className="saturn-ring saturn-ring-back"
-                  aria-hidden="true"
-                />
-              )}
-              <div className="planet-drift">
-                <div className="planet-spin">
-                  <Image
-                    src={planet.image}
-                    alt={`${planet.name}, seen from space`}
-                    width={720}
-                    height={720}
-                    priority={selectedIndex === 2}
-                    className="planet-render"
-                  />
-                </div>
-              </div>
-              {planet.id === "saturn" && (
-                <span
-                  className="saturn-ring saturn-ring-front"
-                  aria-hidden="true"
-                />
-              )}
+              <PlanetVisual
+                planet={planet}
+                presentation="hero"
+                motionPaused={motionPaused}
+                priority={selectedIndex === 2}
+              />
             </div>
           </div>
           <span className="orbit-node orbit-node-one" aria-hidden="true" />
@@ -197,6 +175,7 @@ export function HeroSection({
       <PlanetSelector
         selectedIndex={selectedIndex}
         selectPlanet={selectPlanet}
+        motionPaused={motionPaused}
       />
       <div className="page-container relative z-20 mt-6 flex items-center justify-between pb-8 text-[#75849f]">
         <div className="flex items-center gap-3">

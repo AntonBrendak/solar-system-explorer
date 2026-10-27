@@ -40,7 +40,10 @@ export default function SolarHomepage() {
         handlePointerMove={experience.handlePointerMove}
         handlePointerLeave={experience.handlePointerLeave}
       />
-      <FeaturedDestinations selectPlanet={experience.selectPlanet} />
+      <FeaturedDestinations
+        selectPlanet={experience.selectPlanet}
+        motionPaused={motionPaused}
+      />
       <ExperienceSection />
       <SiteFooter />
     </main>

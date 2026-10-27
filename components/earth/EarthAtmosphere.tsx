@@ -1,13 +1,5 @@
-
-import { FrontSide, Vector3 } from "three";
-
-// Направление на Солнце должно совпадать
-// с directionalLight в PlanetPreview.
-const uniforms = {
-  uSunDirection: {
-    value: new Vector3(-5, 2, 5).normalize(),
-  },
-};
+import { useMemo } from "react";
+import { FrontSide, type Vector3 } from "three";
 
 const vertexShader = `
   varying vec3 vNormal;
@@ -105,7 +97,15 @@ const fragmentShader = `
   }
 `;
 
-export default function EarthAtmosphere() {
+export default function EarthAtmosphere({
+  sunDirection,
+}: {
+  sunDirection: Vector3;
+}) {
+  const uniforms = useMemo(
+    () => ({ uSunDirection: { value: sunDirection } }),
+    [sunDirection],
+  );
   return (
     <mesh>
       <sphereGeometry args={[2.055, 128, 128]} />

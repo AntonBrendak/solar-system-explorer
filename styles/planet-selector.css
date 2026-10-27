@@ -64,14 +64,21 @@
   letter-spacing: 0.015em;
 }
 .planet-picker:hover,
+.planet-picker:focus-visible,
 .planet-picker-active {
   color: #ebf7ff;
 }
 .planet-picker:hover .picker-planet-wrap,
+.planet-picker:focus-visible .picker-planet-wrap,
 .planet-picker-active .picker-planet-wrap {
   transform: translateY(-4px) scale(1.12);
   filter: grayscale(0) brightness(1.12)
     drop-shadow(0 0 12px rgba(139, 195, 255, 0.32));
+}
+.planet-picker:is(:hover, :focus-visible) .picker-planet-wrap {
+  transform: translateY(-4px) scale(1.18);
+  filter: grayscale(0) brightness(1.2)
+    drop-shadow(0 0 14px rgba(139, 195, 255, 0.42));
 }
 .planet-picker-active-line {
   position: absolute;

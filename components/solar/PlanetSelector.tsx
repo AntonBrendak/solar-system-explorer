@@ -1,11 +1,11 @@
-import Image from "next/image";
+import { PlanetVisual } from "@/components/planets/PlanetVisual";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { planets } from "@/data/planets";
 import type { SolarHomepageState } from "@/hooks/useSolarHomepage";
 
-type Props = Pick<SolarHomepageState, "selectedIndex" | "selectPlanet">;
+type Props = Pick<SolarHomepageState, "selectedIndex" | "selectPlanet" | "motionPaused">;
 
-export function PlanetSelector({ selectedIndex, selectPlanet }: Props) {
+export function PlanetSelector({ selectedIndex, selectPlanet, motionPaused }: Props) {
   return (
     <div
       data-hero-nav
@@ -32,15 +32,9 @@ export function PlanetSelector({ selectedIndex, selectPlanet }: Props) {
               aria-label={`Explore ${item.name}`}
               className={`planet-picker ${selectedIndex === index ? "planet-picker-active" : ""}`}
             >
-              <span className="picker-planet-wrap">
-                <Image
-                  src={item.image}
-                  alt=""
-                  width={55}
-                  height={55}
-                  className="h-full w-full object-contain"
-                />
-              </span>
+              <div className="picker-planet-wrap">
+                <PlanetVisual planet={item} presentation="thumbnail" motionPaused={motionPaused} />
+              </div>
               <span className="planet-picker-name">{item.name}</span>
               <span className="planet-picker-active-line" />
             </button>

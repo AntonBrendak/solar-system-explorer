@@ -22,7 +22,7 @@ export function createAmbientMotion(root: HTMLElement) {
   };
 
   spin(".planet-spin", 36);
-  spin(".feature-spin", 48);
+  spin(".feature-spin .planet-image-spin", 48);
   spin(".picker-planet-wrap img", 60);
 
   timeline
