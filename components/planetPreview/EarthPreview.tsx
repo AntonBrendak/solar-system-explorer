@@ -15,7 +15,7 @@ function Earth() {
     const waveTextureRef = useRef<Texture | null>(null);
 
     const textures = useTexture({
-        map: "/textures/earth/earthDay.jpg",
+        map: "/textures/earth/earthDayOcean.png",
         roughnessMap: "/textures/earth/earth_roughness.png",
         normalMap: "/textures/earth/earth_normal.png",
         clearcoatMap: "/textures/earth/earth_ocean_mask.png",
