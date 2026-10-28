@@ -125,7 +125,7 @@ export const cloudVolumeFragment = /* glsl */ `
     }
     float alpha = 1.0 - transmittance;
     if (alpha < 0.003) discard;
-    gl_FragColor = vec4(accumulated / max(alpha, 0.00001), alpha);
+    gl_FragColor = vec4(accumulated / max(alpha, 0.00001), alpha * 0.92);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
   }

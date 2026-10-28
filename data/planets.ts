@@ -137,4 +137,4 @@ export const planets: Planet[] = [
   },
 ];
 
-export const featuredPlanetIds = ["mars", "saturn", "neptune"] as const;
+export const featuredPlanetIds = ["mercury", "saturn", "neptune"] as const;

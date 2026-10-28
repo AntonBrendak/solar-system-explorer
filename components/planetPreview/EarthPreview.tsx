@@ -3,15 +3,15 @@
 import { useRef, useMemo, useEffect } from "react";
 import { useFrame, useLoader } from "@react-three/fiber";
 import { TextureLoader, type Mesh, type Texture } from "three";
-import EarthAtmosphere from "@/components/earth/EarthAtmosphere";
-import EarthClouds from "@/components/earth/EarthClouds";
-import { createOceanNormalMap } from "@/components/earth/createOceanNormalMap";
-import EarthNightLights from "@/components/earth/EarthNightLights";
-import EarthLightning from "@/components/earth/EarthLightning";
-import { useEarthSun } from "@/components/earth/EarthEnvironment";
+import EarthAtmosphere from "@/components/planets/earth/EarthAtmosphere";
+import EarthClouds from "@/components/planets/earth/EarthClouds";
+import { createOceanNormalMap } from "@/components/planets/earth/createOceanNormalMap";
+import EarthNightLights from "@/components/planets/earth/EarthNightLights";
+import EarthLightning from "@/components/planets/earth/EarthLightning";
+import { useEarthSun } from "@/components/planets/earth/EarthEnvironment";
 import { earthTextures } from "@/data/earth-textures";
 import { getEarthRotationY } from "@/lib/earth-time";
-import type { CloudFrameState } from "@/components/earth/cloud-frame-state";
+import type { CloudFrameState } from "@/components/planets/earth/cloud-frame-state";
 import type { PlanetSceneProps } from "@/components/planets/types";
 
 /** Full scene content; Canvas, progressive loading and controls belong to PlanetStage. */

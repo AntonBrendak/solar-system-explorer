@@ -1,0 +1,9 @@
+{
+  "source": "NASA PDS MGS MOLA MEGDR topography",
+  "height_min_m": -12000.0,
+  "height_max_m": 24000.0,
+  "radius_m": 3389500.0,
+  "displacementScale": 0.02124207110193244,
+  "displacementBias": -0.007080690367310813,
+  "normal_strength_multiplier": 2.0
+}

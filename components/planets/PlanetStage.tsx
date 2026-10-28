@@ -242,7 +242,7 @@ export default function PlanetStage({
 }: Props) {
   const active = entries.some((entry) => entry.id === activeId);
   const animate = useSceneMotion(motionPaused, active);
-  const previewOnly = presentation === "thumbnail";
+  const previewOnly = presentation === "thumbnail" || presentation === "card";
   return (
     <Canvas
       camera={{ position: [0, 0, 6], fov: 45 }}
