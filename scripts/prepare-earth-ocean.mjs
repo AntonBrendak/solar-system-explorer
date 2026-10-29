@@ -1,4 +1,3 @@
-
 import sharp from "sharp";
 import { mkdir } from "node:fs/promises";
 

@@ -1,0 +1,6 @@
+/textures/**
+!/textures/
+!/textures/**/
+!/textures/runtime/**
+!/textures/**/*-lite.*
+!/textures/**/ATTRIBUTION.md

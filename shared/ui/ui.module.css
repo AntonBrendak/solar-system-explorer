@@ -1,0 +1,60 @@
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--text);
+  background: #ffffff04;
+  transition:
+    background 0.22s,
+    border-color 0.22s;
+}
+.iconButton:hover {
+  background: #ffffff0d;
+  border-color: #ffffff38;
+}
+.iconButton:active {
+  transform: translateY(0);
+}
+.iconButton svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.5;
+}
+.metric {
+  padding: 22px 0;
+  border-top: 1px solid var(--line);
+  min-width: 0;
+}
+.metric dt {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.metric dd {
+  margin: 0;
+  font-size: clamp(20px, 2vw, 27px);
+  font-weight: 450;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.metric small {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.metric p {
+  font-size: 10px;
+  color: var(--accent);
+  margin: 6px 0 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .iconButton {
+    transition: none;
+  }
+}

@@ -1,0 +1,262 @@
+{
+  "ui": {
+    "observatory": "Digital observatory",
+    "collection": "The collection",
+    "about": "About",
+    "explore": "All eight worlds",
+    "heroEyebrow": "SPACECRAFT MAPS / CURRENT COORDINATES",
+    "heroTitle": "Real worlds.",
+    "heroTitleSecond": "This moment.",
+    "heroDescription": "Terrain and cloud maps based on spacecraft imagery. Planetary positions calculated for the current date. Light, atmosphere and motion brought together in an interactive 3D view.",
+    "heroSecondary": "Look closer",
+    "scroll": "SCROLL TO DISCOVER",
+    "selected": "IN FOCUS",
+    "orbit": "Orbit",
+    "planets": "Planets",
+    "star": "Star",
+    "possibilities": "Discoveries",
+    "galleryEyebrow": "01 / THE PLANETARY COLLECTION",
+    "galleryTitle": "Every world has",
+    "galleryTitleSecond": "a story to tell.",
+    "galleryDescription": "Choose a planet. Look a little closer. Discover what you cannot see from Earth.",
+    "all": "All worlds",
+    "terrestrial": "Terrestrial",
+    "gas": "Gas giants",
+    "ice": "Ice giants",
+    "open": "Explore planet",
+    "fromSun": "FROM THE SUN",
+    "millionKm": "million km",
+    "pause": "Pause animations",
+    "play": "Resume animations",
+    "paused": "Motion paused",
+    "motion": "Motion enabled",
+    "language": "Interface language",
+    "close": "Close planet view",
+    "previous": "Previous planet",
+    "next": "Next planet",
+    "reset": "Reset camera",
+    "drag": "DRAG TO LOOK CLOSER",
+    "loading": "Preparing the model",
+    "fallback": "Planet image",
+    "retry": "Retry loading 3D",
+    "overview": "Overview",
+    "characteristics": "Characteristics",
+    "features": "The story of a world",
+    "discovery": "LOOK A LITTLE CLOSER",
+    "sources": "Sources & credits",
+    "sourceFacts": "NASA facts",
+    "sourceNumbers": "NASA characteristics",
+    "reviewed": "Reviewed 29 Oct 2026",
+    "diameter": "Equatorial diameter",
+    "mass": "Mass",
+    "distance": "Distance from the Sun",
+    "year": "Orbital period",
+    "rotation": "Sidereal rotation",
+    "tilt": "Axial tilt",
+    "km": "km",
+    "kg": "kg",
+    "days": "Earth days",
+    "hours": "hours",
+    "degrees": "°",
+    "retrograde": "Retrograde rotation",
+    "metricNote": "Values are rounded. Sidereal rotation is measured relative to the stars and differs from a solar day. Models are not displayed at a common scale.",
+    "aboutEyebrow": "02 / BEHIND THE ATLAS",
+    "aboutTitle": "Real maps.",
+    "aboutTitleSecond": "Calculated coordinates.",
+    "aboutDescription": "ORBITAL connects planetary maps with astronomical calculations. Explore terrain and cloud patterns, rotate the model and inspect the selected planet’s current position relative to the Sun.",
+    "aboutLink": "Explore the source code",
+    "aboutFact": "Spacecraft mapping",
+    "aboutFactText": "Appearance is based on surface and atmospheric maps. Each planet’s view includes its sources and credits.",
+    "aboutModel": "Date-driven lighting",
+    "aboutModelText": "Sun direction and rotation follow astronomical models. You can freely rotate the viewing camera.",
+    "aboutAccess": "Position right now",
+    "aboutAccessText": "Astronomy Engine calculates heliocentric coordinates for the current UTC time, refreshed every minute.",
+    "footer": "MADE FOR THE CURIOUS",
+    "top": "Back to top",
+    "visualNote": "Maps based on spacecraft imagery. Positions are date-driven; atmospheric effects are simulated. Models are not shown at a common scale.",
+    "modelStatus": "{count, plural, one {# planet} other {# planets}} in the collection",
+    "atlasEdition": "THE CELESTIAL ATLAS — VOL. 01",
+    "selectWorld": "Choose a planet",
+    "livePosition": "Position relative to the Sun",
+    "distanceNow": "Distance now",
+    "eclipticLongitude": "Longitude",
+    "eclipticLatitude": "Latitude",
+    "au": "AU",
+    "modelError": "The 3D model could not load.",
+    "detailError": "More detail could not load. You can keep exploring."
+  },
+  "planets": {
+    "mercury": {
+      "name": "Mercury",
+      "category": "Terrestrial planet",
+      "headline": "Stillness next to the Sun.",
+      "introduction": "A small world with a long memory. Mercury’s craters preserve ancient impacts, while its nearly airless surface faces sunlight without shelter.",
+      "chapters": {
+        "first": {
+          "title": "Between heat and cold",
+          "text": "A tenuous exosphere barely retains heat. Sunlit ground becomes intensely hot, while the long night brings deep cold."
+        },
+        "second": {
+          "title": "Ice beside the Sun",
+          "text": "Sunlight never reaches the floors of some polar craters. Water ice can survive in their permanent shadows."
+        },
+        "third": {
+          "title": "An unexpected rhythm",
+          "text": "Mercury spins three times for every two trips around the Sun. Its solar day is therefore much longer than its year."
+        }
+      },
+      "discovery": "The closest planet to the Sun shelters ice where dawn never arrives."
+    },
+    "venus": {
+      "name": "Venus",
+      "category": "Terrestrial planet",
+      "headline": "Beauty behind a golden veil.",
+      "introduction": "From Earth, Venus looks like a serene point of light. Beneath its clouds lies a world of volcanic plains, immense pressure and heat with little escape.",
+      "chapters": {
+        "first": {
+          "title": "A world beneath clouds",
+          "text": "A dense carbon-dioxide atmosphere traps heat through the greenhouse effect. Venus is hotter than Mercury despite being farther from the Sun."
+        },
+        "second": {
+          "title": "The other direction",
+          "text": "Venus slowly rotates opposite to most planets. A single spin takes longer than its trip around the Sun."
+        },
+        "third": {
+          "title": "A hidden landscape",
+          "text": "Sulfuric-acid clouds conceal the terrain from ordinary view. Radar reveals mountains, plains and volcanic structures beneath them."
+        }
+      },
+      "discovery": "The hottest planet in the Solar System occupies only its second orbit."
+    },
+    "earth": {
+      "name": "Earth",
+      "category": "Terrestrial planet",
+      "headline": "Everything familiar, on one sphere.",
+      "introduction": "A thin blue edge separates our home from space. Oceans, air and a living surface form an interconnected system that never stands still.",
+      "chapters": {
+        "first": {
+          "title": "A world of liquid water",
+          "text": "Oceans cover most of the surface. Water circulates between sea, atmosphere and land, moving heat and sustaining life."
+        },
+        "second": {
+          "title": "A moving surface",
+          "text": "Tectonic plates move slowly. Their boundaries build mountains, open ocean trenches and drive volcanic activity."
+        },
+        "third": {
+          "title": "An atmosphere in detail",
+          "text": "Cloud systems reveal moving air. This model combines satellite imagery with artistic volume rendering; it is not a precise weather forecast."
+        }
+      },
+      "discovery": "The only world we know where life has become part of a planetary system."
+    },
+    "mars": {
+      "name": "Mars",
+      "category": "Terrestrial planet",
+      "headline": "The landscape of a vanished sea.",
+      "introduction": "Red dust conceals the history of a different Mars. Dry valleys and ancient lake deposits point to a time when water reshaped its surface.",
+      "chapters": {
+        "first": {
+          "title": "Traces of missing water",
+          "text": "Today’s atmosphere is too thin for stable exposed liquid water. Channels and minerals preserve evidence of a wetter past."
+        },
+        "second": {
+          "title": "An extraordinary scale",
+          "text": "Olympus Mons and the Valles Marineris canyon system show how monumental the terrain of a small world can become."
+        },
+        "third": {
+          "title": "A planet of dust",
+          "text": "Winds lift fine dust. Some storms spread over vast areas and change the planet’s appearance from space."
+        }
+      },
+      "discovery": "Beneath the red dust lies evidence of a world once reshaped by water."
+    },
+    "jupiter": {
+      "name": "Jupiter",
+      "category": "Gas giant",
+      "headline": "A whole world inside a storm.",
+      "introduction": "Jupiter’s pale zones and dark belts trace a moving atmosphere. Beneath them lies a giant composed mostly of hydrogen and helium.",
+      "chapters": {
+        "first": {
+          "title": "No familiar shoreline",
+          "text": "Jupiter has no ordinary solid surface. Pressure rises with depth, gradually changing the properties of its material."
+        },
+        "second": {
+          "title": "A storm with a history",
+          "text": "The Great Red Spot is a vast, persistent vortex. Its shape and size change, and observations span centuries."
+        },
+        "third": {
+          "title": "A rapid rotation",
+          "text": "Jupiter spins once in roughly ten hours. Its fast rotation accompanies a noticeable flattening at the poles."
+        }
+      },
+      "discovery": "The largest planet completes a rotation faster than any of the others."
+    },
+    "saturn": {
+      "name": "Saturn",
+      "category": "Gas giant",
+      "headline": "An architecture of ice and light.",
+      "introduction": "From afar, the rings seem like a single structure. Up close, they are countless separate particles, each following its own orbit around the planet.",
+      "chapters": {
+        "first": {
+          "title": "Rings without solid walls",
+          "text": "Ice, rock and dust form a thin, extensive system. The gravity of moons helps sculpt gaps and patterns within the rings."
+        },
+        "second": {
+          "title": "The giant beneath",
+          "text": "Saturn is mostly hydrogen and helium. Its cloudy atmosphere conceals deep layers with increasing pressure."
+        },
+        "third": {
+          "title": "Neighbouring worlds",
+          "text": "Titan has a dense atmosphere and hydrocarbon lakes. Enceladus ejects water ice from beneath its surface."
+        }
+      },
+      "discovery": "The apparently solid rings are actually countless independent orbiting particles."
+    },
+    "uranus": {
+      "name": "Uranus",
+      "category": "Ice giant",
+      "headline": "A world with a different sense of up.",
+      "introduction": "A quiet blue disc conceals unusual geometry. Uranus is tilted so far that it appears to roll along its orbit.",
+      "chapters": {
+        "first": {
+          "title": "Seasons measured in decades",
+          "text": "The extreme tilt creates prolonged polar days and nights. One orbit takes about 84 Earth years."
+        },
+        "second": {
+          "title": "What ‘ice giant’ means",
+          "text": "The term describes deep material rich in water, ammonia and methane. It does not imply a solid, frozen surface."
+        },
+        "third": {
+          "title": "A delicate colour",
+          "text": "Atmospheric methane absorbs some red light. A cold atmosphere and a system of faint rings surround the deeper layers."
+        }
+      },
+      "discovery": "Here, the familiar rhythm of days, nights and seasons takes on a different scale."
+    },
+    "neptune": {
+      "name": "Neptune",
+      "category": "Ice giant",
+      "headline": "Motion at the edge of darkness.",
+      "introduction": "Distant Neptune receives only a fraction of our familiar sunlight. Yet its atmosphere is alive with clouds, powerful winds and changing dark vortices.",
+      "chapters": {
+        "first": {
+          "title": "Far from the light",
+          "text": "At this distance, noon is far dimmer than on Earth. A Neptunian year lasts about 165 Earth years."
+        },
+        "second": {
+          "title": "A restless atmosphere",
+          "text": "Large storm systems form in the atmosphere. Methane affects the planet’s colour and forms bright, high-altitude clouds."
+        },
+        "third": {
+          "title": "Calculation came first",
+          "text": "Neptune was found after calculations explained deviations in Uranus’s orbit. Observers confirmed the predicted planet in 1846."
+        }
+      },
+      "discovery": "A planet predicted by mathematics before it was found through a telescope."
+    }
+  },
+  "metadata": {
+    "title": "ORBITAL — Digital Observatory",
+    "description": "Eight planets, eight stories. Explore the Solar System through interactive 3D worlds and sourced planetary characteristics."
+  }
+}

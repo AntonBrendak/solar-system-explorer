@@ -1,0 +1,57 @@
+.selector {
+  display: flex;
+  align-items: center;
+  gap: clamp(15px, 2.5vw, 50px);
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  width: 100%;
+}
+.label {
+  flex-shrink: 0;
+  font:
+    8px var(--font-mono),
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #9db4c7;
+}
+.track {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 5px;
+}
+.track > div {
+  justify-content: space-between;
+  gap: clamp(16px, 2vw, 36px);
+  border-bottom: none;
+  min-width: max-content;
+}
+.track button {
+  font-size: 12px;
+  white-space: nowrap;
+}
+.controls {
+  display: flex;
+  gap: 8px;
+}
+@media (max-width: 767px) {
+  .selector {
+    gap: 10px;
+    flex-wrap: wrap;
+    padding-top: 10px;
+  }
+  .label {
+    display: none;
+  }
+  .track {
+    flex-basis: calc(100% - 98px);
+  }
+  .track button {
+    font-size: 11px;
+  }
+  .controls {
+    gap: 5px;
+  }
+}

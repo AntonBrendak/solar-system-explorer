@@ -1,0 +1,122 @@
+.about h2 {
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(36px, 4.6vw, 66px);
+  line-height: 1.13;
+  font-weight: 450;
+  letter-spacing: -0.05em;
+  margin: 0;
+}
+.about h2 span {
+  color: #8196a9;
+}
+.about {
+  padding-block: 85px 75px;
+  border-top: 1px solid var(--line);
+  scroll-margin-top: 35px;
+}
+.aboutGrid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 80px;
+  align-items: end;
+  margin-top: 30px;
+}
+.aboutDescription {
+  color: #92a3b3;
+  font-size: 13px;
+  line-height: 1.95;
+  max-width: 380px;
+  margin: 0 0 18px;
+}
+.aboutFeatures {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 50px;
+  padding-top: 50px;
+  margin-top: 50px;
+  border-top: 1px solid var(--line);
+}
+.aboutFeatures svg {
+  color: #99bbd5;
+  stroke-width: 1.2;
+}
+.aboutFeatures h3 {
+  font-weight: 500;
+  font-size: 14px;
+  margin: 18px 0 10px;
+}
+.aboutFeatures p {
+  color: #7e91a3;
+  font-size: 11px;
+  line-height: 1.8;
+  max-width: 260px;
+  margin: 0;
+}
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--line);
+  padding-block: 32px;
+  gap: 20px;
+}
+.footer > span {
+  color: #8196aa;
+  font:
+    7px var(--font-mono),
+    monospace;
+  letter-spacing: 0.12em;
+}
+.footer > a:last-child {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  color: #a5b9ca;
+  font-size: 10px;
+  min-height: 44px;
+}
+@media (max-width: 767px) {
+  .about h2 {
+    font-size: clamp(34px, 8.5vw, 55px);
+  }
+  .about {
+    padding-block: 60px 45px;
+  }
+  .aboutGrid {
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+  .aboutDescription {
+    font-size: 12px;
+  }
+  .aboutFeatures {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding-top: 35px;
+    margin-top: 30px;
+  }
+  .aboutFeatures > div {
+    display: grid;
+    grid-template-columns: 30px 1fr;
+    column-gap: 15px;
+  }
+  .aboutFeatures svg {
+    grid-row: span 2;
+    margin-top: 3px;
+  }
+  .aboutFeatures h3 {
+    margin: 0 0 8px;
+  }
+  .aboutFeatures p {
+    max-width: 320px;
+  }
+  .footer {
+    flex-wrap: wrap;
+    padding-block: 25px;
+  }
+  .footer > span {
+    order: 3;
+    width: 100%;
+    font-size: 7px;
+  }
+}

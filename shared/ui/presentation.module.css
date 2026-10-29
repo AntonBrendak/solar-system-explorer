@@ -1,0 +1,118 @@
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #92a4b5;
+  font-family: var(--font-mono), monospace;
+  font-size: 9px;
+  line-height: 1.6;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin: 0;
+}
+.line {
+  height: 1px;
+  width: 26px;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+.primaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 26px;
+  background: #d8e9f5;
+  color: #101b26;
+  font-size: 11px;
+  font-weight: 600;
+  min-height: 52px;
+  padding: 0 20px;
+  border-radius: 3px;
+  transition:
+    background 0.25s,
+    box-shadow 0.25s;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(161, 214, 255, var(--button-light, 0.06));
+}
+.primaryButton:hover {
+  background: #edf7ff;
+  box-shadow: 0 8px 30px #a1d6ff18;
+}
+.textButton {
+  color: #b7cadb;
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 44px;
+  font-size: 11px;
+  background: none;
+  padding: 0;
+  border: 0;
+  transition: color 0.2s;
+}
+.textButton:hover {
+  color: white;
+}
+.liveDot,
+.loadingDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #a7d3c2;
+  box-shadow: 0 0 10px #a7d3c244;
+  flex-shrink: 0;
+}
+.loadingDot {
+  background: #e2bc77;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+.discovery .eyebrow {
+  font-size: 7px;
+  color: var(--planet-accent);
+}
+.subheading {
+  font-size: 14px;
+  font-weight: 450;
+  margin: 30px 0 18px;
+}
+.note {
+  color: #8196aa;
+  font-size: 9px;
+  line-height: 1.8;
+  margin: 0;
+}
+@media (max-width: 767px) {
+  .eyebrow {
+    font-size: 7px;
+    letter-spacing: 0.12em;
+    gap: 9px;
+  }
+  .line {
+    width: 20px;
+  }
+  .primaryButton {
+    min-height: 49px;
+    font-size: 10px;
+    gap: 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(161, 214, 255, var(--button-light, 0.06));
+  }
+  .textButton {
+    font-size: 10px;
+  }
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+.buttonSheen {
+  position: absolute;
+  inset: -60% auto -60% -65%;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, #ffffff88, transparent);
+  transform: skewX(-20deg);
+  pointer-events: none;
+}

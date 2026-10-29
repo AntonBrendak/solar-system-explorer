@@ -35,5 +35,13 @@ jobs:
         run: npm run lint
       - name: Production build
         run: npm run build
+      - name: Catalog and translation tests
+        run: npm test
       - name: Typecheck
         run: npm run typecheck
+      - name: Cloudflare Worker build
+        run: npm run build:vinext
+      - name: Install test browser
+        run: npx playwright install --with-deps chromium
+      - name: Browser tests
+        run: npm run test:e2e

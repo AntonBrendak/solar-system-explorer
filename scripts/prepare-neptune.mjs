@@ -20,12 +20,9 @@ if (!response.ok) {
 
 const source = Buffer.from(await response.arrayBuffer());
 
-await writeFile(
-  fileURLToPath(new URL("neptune-source.jpg", OUT)),
-  source
-);
+await writeFile(fileURLToPath(new URL("neptune-source.jpg", OUT)), source);
 
-// Базовый upscale без искусственных полос.
+// Upscale the source without introducing artificial latitude bands.
 const { data, info } = await sharp(source)
   .resize(W, H, {
     fit: "fill",
@@ -39,17 +36,13 @@ if (info.channels !== 3) {
   throw new Error("Expected RGB texture");
 }
 
-// Только мягкая цветокоррекция,
-// без процедурных поясов по широте.
+// Apply restrained color correction without procedural latitude bands.
 for (let i = 0; i < data.length; i += 3) {
   const r = data[i];
   const g = data[i + 1];
   const b = data[i + 2];
 
-  const luminance =
-    0.2126 * r +
-    0.7152 * g +
-    0.0722 * b;
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
   const saturation = 0.82;
   const brightness = 1.04;
@@ -57,31 +50,21 @@ for (let i = 0; i < data.length; i += 3) {
   const rgb = [r, g, b];
 
   for (let c = 0; c < 3; c++) {
-    const balanced =
-      luminance +
-      (rgb[c] - luminance) * saturation;
+    const balanced = luminance + (rgb[c] - luminance) * saturation;
 
-    data[i + c] = Math.max(
-      0,
-      Math.min(
-        255,
-        Math.round(balanced * brightness)
-      )
-    );
+    data[i + c] = Math.max(0, Math.min(255, Math.round(balanced * brightness)));
   }
 }
 
-// Аккуратный seam fix по краям,
-// но без заметного вмешательства.
+// Blend the longitude seam while preserving source detail.
 const seamWidth = 96;
 
 for (let y = 0; y < H; y++) {
   for (let c = 0; c < 3; c++) {
-    const leftEdge = (y * W) * 3 + c;
+    const leftEdge = y * W * 3 + c;
     const rightEdge = (y * W + W - 1) * 3 + c;
 
-    const common =
-      Math.round((data[leftEdge] + data[rightEdge]) * 0.5);
+    const common = Math.round((data[leftEdge] + data[rightEdge]) * 0.5);
 
     for (let x = 0; x < seamWidth; x++) {
       const t = x / Math.max(seamWidth - 1, 1);
@@ -91,20 +74,14 @@ for (let y = 0; y < H; y++) {
       const li = (y * W + x) * 3 + c;
       const ri = (y * W + W - 1 - x) * 3 + c;
 
-      data[li] = Math.round(
-        data[li] * (1 - weight) + common * weight
-      );
+      data[li] = Math.round(data[li] * (1 - weight) + common * weight);
 
-      data[ri] = Math.round(
-        data[ri] * (1 - weight) + common * weight
-      );
+      data[ri] = Math.round(data[ri] * (1 - weight) + common * weight);
     }
   }
 }
 
-const fullPath = fileURLToPath(
-  new URL("neptune-8k.webp", OUT)
-);
+const fullPath = fileURLToPath(new URL("neptune-8k.webp", OUT));
 
 await sharp(data, {
   raw: {
@@ -128,9 +105,7 @@ await sharp(data, {
     kernel: sharp.kernel.lanczos3,
   })
   .webp({ quality: 88, effort: 5 })
-  .toFile(
-    fileURLToPath(new URL("neptune-lite.webp", OUT))
-  );
+  .toFile(fileURLToPath(new URL("neptune-lite.webp", OUT)));
 
 await writeFile(
   fileURLToPath(new URL("ATTRIBUTION.md", OUT)),
@@ -148,7 +123,7 @@ await writeFile(
     "Only mild color correction and seam repair applied.",
     "No procedural latitude bands baked into the texture.",
   ].join("\n"),
-  "utf8"
+  "utf8",
 );
 
 console.log("Neptune textures regenerated successfully.");

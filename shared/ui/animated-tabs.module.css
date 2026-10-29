@@ -1,0 +1,54 @@
+.root {
+  display: flex;
+  position: relative;
+  gap: 22px;
+  border-bottom: 1px solid var(--line);
+  isolation: isolate;
+}
+.root button {
+  position: relative;
+  background: none;
+  border: 0;
+  color: #8ea3b7;
+  padding: 15px 0;
+  min-height: 46px;
+  font-size: 12px;
+  transition: color 0.2s;
+}
+.root button[aria-pressed="true"] {
+  color: #e6eff7;
+}
+.root button:hover {
+  color: white;
+}
+.indicator {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 1px;
+  background: var(--planet-accent, var(--accent));
+  pointer-events: none;
+}
+.root[data-variant="pills"] {
+  gap: 5px;
+  border-bottom: 0;
+  flex-wrap: wrap;
+}
+.root[data-variant="pills"] button {
+  padding: 12px 18px;
+  font-size: 11px;
+}
+.root[data-variant="pills"] .indicator {
+  bottom: 0;
+  height: 100%;
+  background: #aecde00b;
+  border: 1px solid #aecde030;
+  border-radius: 4px;
+  z-index: -1;
+}
+@media (max-width: 767px) {
+  .root[data-variant="pills"] button {
+    padding-inline: 12px;
+    font-size: 10px;
+  }
+}

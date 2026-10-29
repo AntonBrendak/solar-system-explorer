@@ -15,30 +15,43 @@ const maps = [
 ];
 
 for (const [input, name, width, format] of maps) {
-  let image = sharp(fileURLToPath(new URL(input, source)))
-    .resize(width, width / 2, { fit: "fill" });
-  image = format === "webp"
-    ? image.webp({ quality: 94, effort: 6 })
-    : image.png({ compressionLevel: 9 });
+  let image = sharp(fileURLToPath(new URL(input, source))).resize(
+    width,
+    width / 2,
+    { fit: "fill" },
+  );
+  image =
+    format === "webp"
+      ? image.webp({ quality: 94, effort: 6 })
+      : image.png({ compressionLevel: 9 });
   await image.toFile(fileURLToPath(new URL(name, output)));
 }
 
 let cloudSource = new URL("cloudsLive.png", source);
-try { await access(cloudSource); }
-catch { cloudSource = new URL("earthClouds.jpg", source); }
+try {
+  await access(cloudSource);
+} catch {
+  cloudSource = new URL("earthClouds.jpg", source);
+}
 const { hasAlpha } = await sharp(fileURLToPath(cloudSource)).metadata();
 const alpha = await sharp(fileURLToPath(cloudSource))
   .resize(2048, 1024)
   .extractChannel(hasAlpha ? "alpha" : "green")
   .png()
   .toBuffer();
-await sharp({ create: { width: 2048, height: 1024, channels: 3, background: "white" } })
+await sharp({
+  create: { width: 2048, height: 1024, channels: 3, background: "white" },
+})
   .joinChannel(alpha)
   .webp({ quality: 94, alphaQuality: 100, effort: 6 })
   .toFile(fileURLToPath(new URL("clouds-fallback.webp", output)));
 
-const inputBytes = (await Promise.all(maps.map(([name]) => stat(new URL(name, source)))))
-  .reduce((sum, item) => sum + item.size, 0);
-const outputBytes = (await Promise.all(maps.map(([, name]) => stat(new URL(name, output)))))
-  .reduce((sum, item) => sum + item.size, 0);
-console.log(`Surface/material/night maps: ${(inputBytes / 1048576).toFixed(1)} → ${(outputBytes / 1048576).toFixed(1)} MiB. Runtime assets prepared.`);
+const inputBytes = (
+  await Promise.all(maps.map(([name]) => stat(new URL(name, source))))
+).reduce((sum, item) => sum + item.size, 0);
+const outputBytes = (
+  await Promise.all(maps.map(([, name]) => stat(new URL(name, output))))
+).reduce((sum, item) => sum + item.size, 0);
+console.log(
+  `Surface/material/night maps: ${(inputBytes / 1048576).toFixed(1)} → ${(outputBytes / 1048576).toFixed(1)} MiB. Runtime assets prepared.`,
+);

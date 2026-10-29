@@ -1,107 +1,83 @@
-# ORBITAL — Solar System Explorer
+# ORBITAL — Digital Observatory
 
-[![CI](https://github.com/AntonBrendak/solar-system-explorer/actions/workflows/ci.yml/badge.svg)](https://github.com/AntonBrendak/solar-system-explorer/actions/workflows/ci.yml)
-
-A cinematic, interactive Solar System Explorer with an animated eight-planet homepage, a live 3D Earth, and a model laboratory. Built with Next.js App Router, React, TypeScript, Tailwind CSS v4, GSAP, Three.js, and React Three Fiber.
+A bilingual Solar System atlas built with Next.js, React, TypeScript, next-intl, GSAP and React Three Fiber. Eight animated planet cards open a fullscreen observatory with detailed stories, comparable characteristics and interactive 3D models. Textures progressively reach their highest supported source resolution, including genuine 8K maps, without requiring a quality selector.
 
 ## Development
 
-Use Node.js 22 (see `.nvmrc`) and npm:
+Use Node.js 22 or newer and npm 10. The project uses ES modules.
 
-```bash
+```sh
 npm ci
 npm run dev
 ```
 
-Open <http://localhost:3000>. For a production preview, run `npm run build`, then `npm run start`.
+Open [localhost:3000](http://localhost:3000). Production uses `npm run build` followed by `npm run start`. No account, database or API key is required.
 
-| Route         | Experience                                                                        |
-| ------------- | --------------------------------------------------------------------------------- |
-| `/`           | Eight-planet explorer, animated hero, destination cards, and mission section      |
-| `/planet-lab` | WebGL Earth preview with rotating surface, clouds, atmosphere, and orbit controls |
+## Source map
 
-3D models require WebGL; artwork is used while loading and if WebGL is unavailable. Earth uses public cloud imagery and server routes for precipitation and lightning. No API keys are required. The optional NOAA lightning feed is supplied by `scripts/fetch-noaa-lightning.py`.
+| Directory                  | Responsibility                                                   |
+| -------------------------- | ---------------------------------------------------------------- |
+| `app/`                     | Route composition, metadata and thin HTTP adapters               |
+| `widgets/observatory/`     | Page sections, gallery and detail presentation                   |
+| `features/explorer/`       | Selection, browser history, dialog lifecycle and planet selector |
+| `features/planet-viewer/`  | Shared Canvas, scene cache, resource ownership and planet scenes |
+| `features/ephemeris/`      | Live coordinate presentation                                     |
+| `features/localization/`   | Language picker                                                  |
+| `features/motion/`         | GSAP decorations and interaction effects                         |
+| `features/weather/server/` | NOAA, EUMETSAT and NASA response processing                      |
+| `entities/planet/`         | Planet IDs, numeric catalog and astronomical positions           |
+| `shared/`                  | Domain-independent UI, browser helpers and global styles         |
+| `i18n/`, `messages/`       | Locale resolution, typed messages and RU/EN copy                 |
+| `scripts/`                 | Asset preparation and optional weather ingestion                 |
+| `public/`                  | Textures, artwork, licensed fonts and attribution                |
+| `tests/`                   | Architecture, catalog, weather, cache and browser checks         |
 
-## Project structure
+Import features through their public `index.ts` modules. Keep scene files, shaders, textures metadata and orientation calculations together under `features/planet-viewer/scenes/<planet>/`.
 
-```text
-app/
-  globals.css                Ordered stylesheet imports
-  layout.tsx                 Metadata and English document language
-  page.tsx                   Thin route entry point
-  planet-lab/page.tsx        3D Earth laboratory route
-components/
-  SolarHomepage.tsx          Main page composition
-  solar/
-    Logo.tsx                 Shared original logo
-    SiteHeader.tsx           Desktop and mobile navigation
-    Starfield.tsx            Original stars, nebulae, and grain
-    HeroSection.tsx          Hero copy, planet stage, and planet information
-    PlanetSelector.tsx       All eight planets and previous/next controls
-    FeaturedDestinations.tsx Three original destination cards
-    ExperienceSection.tsx   Experience copy and statistics
-    SiteFooter.tsx           Footer and back-to-top link
-  planets/                   Persistent Canvas, scene cache, preview/full registry
-  planetPreview/
-    EarthPreview.tsx         Full Earth scene content (uses the shared Canvas)
-  earth/                     Atmosphere, clouds, and procedural ocean normal map
-hooks/
-  useSolarHomepage.ts        State, entrance/transition GSAP sequences, and handlers
-  useAmbientMotion.ts       Continuous motion, pause, visibility, reduced motion
-lib/
-  solar-motion.ts           Scoped ambient GSAP timeline
-data/
-  planets.ts                 Original planet data and featured IDs
-styles/
-  base.css                   Shared typography, colors, and primitives
-  header.css                 Header, logo, and mobile navigation
-  hero.css                   Hero layout, planets, orbits, and ambient motion
-  planet-selector.css        Destination selector and motion control
-  sections.css               Featured cards, experience, and footer
-  responsive.css             Original breakpoints and reduced-motion rules
-public/
-  planets/                   Local WebP artwork
-  textures/earth/            Local Earth surface, cloud, and material textures
-assets/earth/                Source maps for texture processing
-scripts/                     Sharp-based texture preparation utilities
-docs/
-  architecture.md            Component ownership and refactoring conventions
+See [architecture](docs/architecture.md) for dependency rules and collaboration, and [planet models](docs/planet-models.md) for renderer ownership and extension instructions.
+
+## Runtime behavior
+
+- Mercury is the initial Full model. `/?lang=en&focus=mercury&planet=saturn` restores locale, focus and an open detail view.
+- The native fullscreen dialog preserves browser history, keyboard focus, camera interaction and reduced-motion preferences. The language picker appears only on the main page.
+- One Canvas serves visible previews and a bounded cache of prepared Full scenes. At most two Full scenes are retained, subject to a device-aware 96/160/384 MiB texture estimate; one active model may exceed that budget.
+- Detail upgrades automatically through 1K/2K/4K/8K as supported by the source and GPU. The previous level stays visible during preparation; slower connections start smaller and upgrade more slowly. A context-loss recovery lowers the session ceiling. Failed loads can be retried or recover when the planet is revisited.
+- Planet positions are computed for the current date. Texture maps are based on spacecraft imagery; lighting, cloud volume and weather effects include artistic interpretation.
+- Optional weather sources fail gracefully. The page and local planet maps remain usable when an upstream service is unavailable.
+- `/planet-lab` redirects to Earth details.
+
+## Cloudflare deployment
+
+The standard Next.js development and production scripts remain available. The separate vinext build runs the same application on Cloudflare Workers:
+
+```sh
+npm run build:vinext
+npm run start:vinext
+npm run deploy:vinext
 ```
 
-The `@/` import alias resolves from the project root. See [the architecture guide](docs/architecture.md) for component responsibilities, animation contracts, and team review checks. See [planet visuals](docs/planet-models.md) to register another 3D object without editing page sections.
-
-## Existing behavior
-
-- Earth is selected initially; all eight planets can be selected.
-- Selecting Earth displays the same 3D scene as `/planet-lab`, with live clouds, precipitation shading, night lights and a slow camera orbit. A lightweight preview upgrades inside the same Canvas. Selector previews rotate around their axes without loading detailed scenes.
-- WebGL is deferred until after the interface paints. Visited scenes keep their GPU resources in one Canvas per display frame, so returning to a planet does not rebuild its model. Inactive scenes pause; texture preparation yields between uploads. Earth uses prepared runtime textures rather than the large source maps.
-- Previous/next controls wrap between Mercury and Neptune.
-- Featured cards select Mars, Saturn, or Neptune and return to the hero.
-- “Explore all eight planets” starts with Mercury.
-- Section links navigate within the original page.
-- GSAP controls the entrance sequence, scroll reveals, planet transitions, and pointer parallax.
-- Planets rotate continuously in the hero, selector, and destination cards. Separate spin layers preserve the existing hover and floating effects; Saturn's rings keep their orientation.
-- The logo has rotating orbital rings, an orbiting satellite, and a pulsing core. Light particles follow the hero's orbit lines; the nebulae and planet halo drift and pulse.
-- Statistics enter with a stagger; navigation links and primary buttons have hover/focus effects.
-- The motion control pauses CSS, GSAP and the 3D render loop without resetting their positions. Hidden tabs and reduced motion also stop continuous 3D rendering.
-- Planet artwork is local and requires no external image API.
+See [Cloudflare deployment](docs/cloudflare.md) for runtime bindings, asset limits and deployment checks. Localized titles, descriptions, canonical URLs and Open Graph images update with the selected language. Set `ORBITAL_SITE_URL` for a custom public origin; otherwise the request host is used.
 
 ## Validation
 
-```bash
+```sh
+npm test
 npm run lint
-npm run typecheck
 npm run build
+npm run typecheck
+npm run test:e2e
 ```
 
-Check the page on desktop and mobile after visual changes. Next.js may generate `AGENTS.md` when starting the development server.
+Browser tests run production on port 3100, using installed Chrome locally. CI installs Chromium with `npx playwright install --with-deps chromium`. Screenshots, failure traces and renderer measurements are written under ignored `test-results/`.
 
-GitHub Actions runs the same checks for pushes to `main` and pull requests. The workflow builds before the standalone typecheck so Next.js can generate its local type declarations in a fresh checkout.
+Tests protect module boundaries, translation parity, scientific catalog values, recoverable weather failures, scene reuse, resource limits, placement, localization, history, accessibility and motion controls. Renderer measurements are regression checks; they do not establish performance on every GPU.
 
-## Contributing
+## Assets and sources
 
-Create a feature branch, keep changes focused, and open a pull request against `main`. Follow [the architecture guide](docs/architecture.md) and run the validation commands before submitting. Include screenshots when changing the visual layout. Keep generated builds, dependencies, local editor settings, and environment files out of commits.
+Characteristics consistently use equatorial diameter and sidereal rotation from the [NASA Planetary Fact Sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/). Each planet links to its sources. Models do not share a physical distance or size scale.
 
-## Artwork and data
+Inter and Manrope are self-hosted with OFL licenses in `public/fonts/`. `node scripts/prepare-fonts.mjs` regenerates the font files and explicit Latin/Cyrillic Unicode ranges. Global CSS is imported directly by `app/layout.tsx`; keep local styles out of Tailwind's CSS import resolver. No external font requests occur at runtime.
 
-Illustrations are artistic interpretations, not scientific visualizations. Values are rounded, and known moon counts can change with new discoveries. The application uses the supplied dataset rather than a live astronomical API.
+`npm run prepare:textures` regenerates the sized WebP variants and their manifest from the retained originals. `npm run prepare:og` regenerates the localized share artwork. Sources below 8K are not upscaled; the 8K level uses their highest genuine resolution.
+
+Texture attribution remains alongside the corresponding assets. Legacy `styles/base.css` and `styles/responsive.css` are unimported historical files; they are not part of the current design system.

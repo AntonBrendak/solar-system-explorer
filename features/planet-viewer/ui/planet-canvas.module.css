@@ -1,0 +1,70 @@
+.root {
+  position: relative;
+  isolation: isolate;
+}
+.canvasHost {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+}
+.canvasHost canvas {
+  pointer-events: none;
+}
+.viewport {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+.recovery {
+  position: absolute;
+  z-index: 60;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  width: fit-content;
+  max-width: calc(100% - 32px);
+  padding: 12px 16px;
+  border: 1px solid #c2d5ed33;
+  background: #0b1119f5;
+  border-radius: 8px;
+  color: #cddcea;
+  font-size: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+}
+.recovery button {
+  border: 0;
+  background: transparent;
+  color: #e8f4ff;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+.active {
+  position: absolute;
+  inset: 0;
+}
+.poster {
+  object-fit: contain;
+  padding: 8%;
+  pointer-events: none;
+}
+.view {
+  position: absolute;
+  inset: 0;
+  touch-action: pan-y;
+}
+.viewport[data-detailed="true"] .view {
+  touch-action: none;
+  cursor: grab;
+}
+.viewport[data-detailed="true"] .view:active {
+  cursor: grabbing;
+}
+@media (prefers-reduced-motion: reduce) {
+  .poster {
+    transition: none;
+  }
+}

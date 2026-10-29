@@ -1,43 +1,95 @@
-# Frontend structure
+# Architecture
 
-## Scope
+ORBITAL separates route composition, user interactions, domain data and rendering infrastructure. Folder placement follows ownership; generic root-level component and helper collections are avoided.
 
-The English-language ORBITAL homepage keeps its original visual composition and planet-selection behavior. Continuous motion was expanded at the user's request. Further structural cleanup should preserve the current layout, animation behavior, and content.
+## Dependency direction
 
-## Ownership
+```text
+app → widgets → features → entities
+          ↓         ↓          ↓
+                  shared
+```
 
-| Area                                                                            | Owner file                     |
-| ------------------------------------------------------------------------------- | ------------------------------ |
-| Route                                                                           | `app/page.tsx`                 |
-| Document metadata and language                                                  | `app/layout.tsx`               |
-| Page composition                                                                | `components/SolarHomepage.tsx` |
-| Selection, mobile menu, motion state, refs, GSAP timelines and pointer handlers | `hooks/useSolarHomepage.ts`    |
-| Shared planet content                                                           | `data/planets.ts`              |
-| Shared object display and model registry                                         | `components/planets/`          |
-| Page sections and visual elements                                               | `components/solar/`            |
-| Ordered stylesheet entry point                                                  | `app/globals.css`              |
-| Base styles, header, hero, selector, editorial sections, breakpoints            | `styles/`                      |
+`i18n/` owns locale configuration and message access. `messages/` owns translated product copy. Domain entities do not import localization infrastructure.
 
-`SolarHomepage` is the client boundary. Child components receive typed props. The hook owns the existing shared state and animation refs so selecting a planet updates the hero, its information, and the selector together. `SolarHomepageState` supplies the existing prop types via `Pick`; imports of this type are erased at build time.
+| Layer              | Allowed project dependencies                                              |
+| ------------------ | ------------------------------------------------------------------------- |
+| `app/`             | Widgets, feature entry points, weather server handlers, entities and i18n |
+| `widgets/`         | Feature public APIs, entities, i18n and shared primitives                 |
+| `features/<name>/` | Its own internals, entities, i18n and shared primitives                   |
+| `entities/`        | Entities and domain-independent shared helpers                            |
+| `shared/`          | Other shared modules only                                                 |
 
-The hero, selector, cards and laboratory render through `PlanetVisual`. A generic registry supplies optional preview, full scene and environment components. `PlanetStage` owns one persistent Canvas per frame and retains visited scenes for resource reuse. Selector previews use only the lightweight scene and rotate around their axes. Scene loading is deferred until after paint; GPU preparation yields between texture uploads. See [object scenes](planet-models.md) for the contract, loading sequence and insertion steps.
+Features do not import sibling features or page widgets. Compose independent features in the observatory widget. Cross-module imports use `@/`; colocated internals use relative paths. `npm test` resolves both styles and checks static imports, re-exports and lazy imports. ESLint provides immediate feedback for forbidden layers, private feature imports, runtime console output and debugger statements.
 
-## Animation contracts
+## Module ownership
 
-GSAP selectors rely on the original `data-nav`, `data-hero-*`, `data-planet-stage`, `data-side-info`, and `data-reveal` attributes. Keep these attributes, their classes, and the rendered element hierarchy intact. The hook scopes animations to the root `main` element.
+### Page composition
 
-CSS animates the starfield and gentle vertical planet drift. GSAP handles the entrance sequence, scroll reveals, planet transitions, and pointer parallax in `useSolarHomepage`. The separate `useAmbientMotion` hook owns the continuous timeline from `lib/solar-motion.ts`, including planet spins, logo orbits, moving orbit particles, nebula drift, and halo/core pulses.
+`app/page.tsx` resolves initial URL state and localized metadata, then renders the observatory. `app/layout.tsx` owns locale, font preloads and direct global CSS imports. `proxy.ts` resolves the language query, then the cookie, then Russian.
 
-The hero's `.planet-drift` and `.planet-spin` wrappers isolate CSS floating from GSAP rotation. Card `.feature-spin` frames contain a `.planet-image-spin` layer for rotation, separate from the existing image hover transforms; thumbnail rotation targets the inner image. WebGL models are siblings of the image spin layer and handle their own camera orbit. Avoid animating the same transform from both CSS and GSAP. Saturn's ring elements stay outside the spin wrappers.
+`widgets/observatory/` owns the header, hero, gallery, cards, fullscreen details and footer. Each section has a CSS Module. Shared typography and actions use `shared/ui/presentation.module.css`; design tokens, reset and the fluid page gutter live in `shared/styles/`.
 
-Ambient timelines use `gsap.matchMedia` for live reduced-motion updates and revert on cleanup. The pause control and hidden-tab handling pause the existing timeline instead of recreating it, retaining each element's position. Keep the `motion-paused` CSS class and GSAP pause state synchronized. Never pause the global GSAP timeline: it would also freeze navigation and reveal transitions.
+### Feature APIs
 
-## Style organization
+| Entry point              | Public responsibility                                                          |
+| ------------------------ | ------------------------------------------------------------------------------ |
+| `features/explorer`      | Explorer state, dialog lifecycle and focus selector                            |
+| `features/planet-viewer` | `PlanetViewport`, `PlanetCanvasProvider`, `usePlanetCanvas`, `getPlanetVisual` |
+| `features/ephemeris`     | Current planetary coordinate readout                                           |
+| `features/localization`  | Animated language picker                                                       |
+| `features/motion`        | Scoped GSAP ambient and interaction motion                                     |
 
-`app/globals.css` imports the fonts and Tailwind first, followed by base styles, header, hero, planet selector, editorial sections, and responsive rules. Keep that order so breakpoint overrides apply last. Local planet assets remain in `public/planets/`.
+Use public entry points from widgets. Do not import a feature's `model/`, `ui/` or scene internals from the page. Tests may inspect internal contracts directly. Weather handlers are explicit server entry points rather than a barrel that eagerly loads every upstream processor.
 
-## Review checklist
+### Renderer
 
-Run `npm run lint`, `npm run typecheck`, and `npm run build`. For structural changes, compare the rendered markup and animation statements with the previous version. In a browser, check all eight selections, previous/next wraparound, featured-card selection and return scroll, section links, pause/resume, mobile navigation, and reduced motion.
+`features/planet-viewer/` has three internal areas:
 
-Keep design changes and new functionality out of structural cleanup. Weather routes under `app/api/` support Earth's existing layers; the page has no account, search, favorites or comparison features.
+- `ui/`: DOM targets, Canvas host, Drei Views, error/fallback handling and prepared-frame presentation.
+- `model/`: Cache policy and state, resource accounting, texture ownership and scene contracts. It does not import UI or planet scenes.
+- `scenes/`: Lazy registration and one folder per planet, including Full/Lite geometry, environments, shaders and orientation calculations.
+
+One Canvas persists across the page and native dialog. Full scene lifetime belongs to `useSceneCache`, independently of viewport mounts. Views follow the current DOM target. Update the View portal's local store when its size changes; its inherited `setSize` function would resize the entire Canvas. See [renderer contracts](planet-models.md).
+
+### Server weather
+
+`app/api/**/route.ts` contains HTTP method adapters and Next.js route configuration. `features/weather/server/` owns upstream requests, response validation, portable PNG transformation and local NOAA file access. PNG processing uses JavaScript rather than a native binary, so the same handler runs on Workers. Preserve `runtime` and `dynamic` exports in route files, where Next.js can statically analyze them.
+
+Cloud and lightning effects stop requests when their scene is inactive. Recoverable upstream failures return 502/503 or retain the last usable local map without repeated console warnings. CLI preparation tools may report progress and errors; runtime modules do not print diagnostics. Optional render diagnostics are available through an explicit URL flag.
+
+The optional `scripts/fetch-noaa-lightning.py` ingester writes ignored `data/noaa-lightning.json`. An absent or stale file produces an empty lightning fallback. The cyclones and raw precipitation endpoints remain available; unused legacy rendering overlays have been removed.
+
+## State and interaction
+
+`features/explorer/model/useExplorer.ts` owns locale, selected detail planet, focused hero planet, pause state, card origin and browser history. Gallery filtering stays local to the gallery.
+
+The URL uses `?lang=en&focus=mercury` and adds `planet=saturn` for details. Opening pushes history; detail navigation replaces that entry. Closing retains the most recently explored focus. Back/Forward restores URL state.
+
+`usePlanetDialog` owns `showModal()`, entry/exit motion, scroll locking and focus restoration. The Canvas provider moves the existing host into the browser top layer, then restores it before dialog removal. This preserves the React renderer and WebGL context. Keep controls, close and navigation reachable on narrow screens.
+
+## Localization and motion
+
+RU/EN catalogs have identical typed keys, ICU messages and locale-aware numbers. Use `useTranslations`, `useFormatter` and `usePlanetStory`; avoid locale-dependent copy embedded in components. The language picker exists only in the main header. Font faces declare explicit Unicode ranges and load from local assets. `i18n/page-metadata.ts` shares localized metadata between server generation and client locale transitions; the client updates existing head entries without duplicating server-streamed tags.
+
+GSAP is imported only by browser effects, avoiding module-level timers in the Workers runtime. Its lifetime and interaction delegation live in `features/motion/model/`. Stable `data-motion-*` selectors decouple timelines from CSS Module names. Ambient motion pauses for user preference, hidden tabs and open dialogs; reduced motion removes animated decoration. These animations do not transform the WebGL model or View.
+
+Frame state stays in refs; React state describes interaction and loading transitions. Reuse `AnimatedTabs`, `IconButton`, `MotionReveal`, `MetricCard` and `ErrorBoundary` instead of duplicating behavior.
+
+## Working conventions
+
+- Write documentation, code comments, error messages and CLI output in English. Product copy belongs in the bilingual catalogs; language names retain their native spelling.
+- Keep comments for coordinate conventions, resource ownership and non-obvious constraints. Remove decorative banners and descriptions that merely repeat the code.
+- Agree on public props and module ownership before parallel work. UI, scientific catalog, individual planet scenes and weather processing can be changed independently.
+- Add a feature public export only when another module needs it. Do not flatten shader helpers or cache internals into a global utility collection.
+- Keep generated assets and attribution together. Temporary reports, screenshots, downloaded weather data and traces remain outside tracked source files.
+
+## Validation
+
+Run the commands in [README](../README.md#validation). `npm test` checks layer boundaries, catalogs, date-driven positions, cache ownership and quiet weather fallbacks. Browser tests cover one Canvas, all eight models, cached revisits, dialog transfers, responsive layout, keyboard/focus behavior, RU/EN fonts, reduced motion and WebGL fallback.
+
+Performance checks wait for Full quality, compare model pixels against its tracked viewport, traverse every planet twice and compare actual Three.js resource counts with resident scene resources. The JSON report is saved in the test's output directory. Texture bytes are estimates, not exact driver VRAM measurements; validate performance on target hardware before making FPS claims.
+
+## Deployment
+
+Next.js/Turbopack remains the normal local workflow. `vite.config.ts` and `wrangler.jsonc` provide a separate vinext/Cloudflare build, with a KV data-cache binding and an asset binding. See [Cloudflare deployment](cloudflare.md). Keep generated `dist/`, `.vinext/` and `.wrangler/` output out of Git. CI validates both builds.

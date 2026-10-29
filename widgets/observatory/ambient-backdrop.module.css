@@ -1,0 +1,38 @@
+.backdrop {
+  position: absolute;
+  inset: 0 calc(-1 * var(--page-gutter));
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.nebulaOne,
+.nebulaTwo {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(50px);
+}
+.nebulaOne {
+  width: 68%;
+  height: 75%;
+  right: -6%;
+  top: -5%;
+  background: radial-gradient(ellipse, #1c456b30, transparent 70%);
+}
+.nebulaTwo {
+  width: 55%;
+  height: 65%;
+  left: -16%;
+  bottom: -10%;
+  background: radial-gradient(
+    ellipse,
+    color-mix(in srgb, var(--planet-accent, #a5cae8) 10%, transparent),
+    transparent 70%
+  );
+}
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #d1e6f7;
+  box-shadow: 0 0 4px #b2d8f644;
+}

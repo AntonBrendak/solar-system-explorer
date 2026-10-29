@@ -11,9 +11,7 @@ await mkdir("public/textures", {
 const metadata = await sharp(input).metadata();
 
 if (metadata.channels < 3) {
-  throw new Error(
-    "Normal Map должна содержать RGB-каналы."
-  );
+  throw new Error("The normal map must contain RGB channels.");
 }
 
 const result = await sharp(input)
@@ -23,6 +21,4 @@ const result = await sharp(input)
   })
   .toFile(output);
 
-console.log(
-  `Normal Map converted: ${result.width}x${result.height}`
-);
+console.log(`Normal Map converted: ${result.width}x${result.height}`);

@@ -1,0 +1,419 @@
+.dialogBackdrop {
+  --text: #edf2f7;
+  --muted: #8c9aa9;
+  --accent: #a5cae8;
+  --line: #c2d5ed18;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #080e16;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  color: var(--text);
+  backdrop-filter: none;
+  max-width: none;
+  max-height: none;
+  width: 100%;
+  height: 100dvh;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+}
+.dialog {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 0;
+  border-radius: 0;
+  background: #0a1019;
+  box-shadow: none;
+  overflow: hidden;
+}
+.dialogHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 76px;
+  padding: 12px var(--page-gutter);
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+  gap: 15px;
+}
+.dialogCategory {
+  font-size: 9px;
+  color: #778c9e;
+  margin-left: auto;
+  margin-right: 25px;
+}
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  background: transparent;
+  border: 0;
+  color: #c4d3df;
+  padding: 10px 0 10px 10px;
+  min-height: 44px;
+  min-width: 44px;
+}
+.closeButton span {
+  font:
+    8px var(--font-mono),
+    monospace;
+  color: #8196aa;
+}
+.dialogBody {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+}
+.dialogVisual {
+  position: relative;
+  min-width: 0;
+  background:
+    radial-gradient(
+      ellipse at 45% 45%,
+      color-mix(in srgb, var(--planet-accent) 7%, transparent),
+      transparent 65%
+    ),
+    #080e16;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 25px;
+  border-right: 1px solid var(--line);
+}
+.detailPlanet {
+  position: absolute;
+  inset: 2% -5% 14%;
+}
+.dialogOrbit {
+  position: absolute;
+  top: 26%;
+  left: 4%;
+  width: 92%;
+  height: 36%;
+  border: 1px solid #b2d2eb16;
+  border-radius: 50%;
+  transform: rotate(-30deg);
+}
+.dialogPlanetNumber {
+  position: absolute;
+  left: 25px;
+  top: 25px;
+  color: #688299;
+  font:
+    9px var(--font-mono),
+    monospace;
+}
+.viewToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  gap: 12px;
+}
+.viewToolbar > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #7c92a4;
+  font:
+    7px var(--font-mono),
+    monospace;
+  letter-spacing: 0.06em;
+}
+.modelNote {
+  position: relative;
+  font-size: 8px;
+  line-height: 1.7;
+  color: #8196aa;
+  max-width: 360px;
+  margin: 15px 0 0;
+}
+.dialogScroll {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #465d7244 transparent;
+}
+.detailContent {
+  padding: clamp(28px, 3.5vw, 72px);
+  max-width: 880px;
+  margin: 0 auto;
+}
+.detailContent h2 {
+  font:
+    450 clamp(40px, 5vw, 68px)/1.1 var(--font-display),
+    sans-serif;
+  letter-spacing: -0.055em;
+  margin: 14px 0 10px;
+}
+.detailContent h2 span {
+  color: var(--planet-accent);
+}
+.detailHeadline {
+  font-size: 13px;
+  color: var(--planet-accent);
+  line-height: 1.6;
+  margin: 0;
+}
+.introduction {
+  font-size: 12px;
+  line-height: 1.95;
+  color: #9aaaba;
+  margin: 22px 0 0;
+}
+.detailTabs {
+  display: flex;
+  gap: 25px;
+  margin-block: 25px 28px;
+  border-bottom: 0;
+}
+.chapterList {
+  animation: contentEnter 0.4s ease both;
+}
+.chapter {
+  display: flex;
+  gap: 16px;
+  margin-block: 24px;
+}
+.chapter > span {
+  font:
+    8px var(--font-mono),
+    monospace;
+  color: #688096;
+  padding-top: 3px;
+}
+.chapter h3 {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0 0 8px;
+  color: #d0dce6;
+}
+.chapter p {
+  color: #9bafbf;
+  font-size: 12px;
+  line-height: 1.9;
+  margin: 0;
+}
+.discovery {
+  background: #c0d9ee05;
+  border-left: 1px solid var(--planet-accent);
+  padding: 20px;
+  margin-block: 30px;
+}
+.discovery > span {
+  font-size: 7px;
+  color: var(--planet-accent);
+}
+.discovery p {
+  font-size: 12px;
+  color: #c0d0de;
+  line-height: 1.8;
+  margin: 11px 0 0;
+}
+.sources {
+  border-top: 1px solid var(--line);
+  margin-top: 30px;
+  padding-top: 20px;
+  color: #718a9e;
+  font-size: 9px;
+}
+.sources h3 {
+  font-size: 10px;
+  font-weight: 400;
+  color: #a6b8c7;
+  margin: 0 0 14px;
+}
+.sources > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.sources a {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  line-height: 1.8;
+  color: #91b1c9;
+}
+.sources a:hover {
+  color: white;
+}
+.sources .creditLink {
+  display: block;
+  font-size: 8px;
+  margin-top: 12px;
+}
+.sources > span {
+  display: block;
+  margin-top: 12px;
+  font-size: 8px;
+  color: #8196aa;
+}
+.dialogFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--line);
+  min-height: 68px;
+  padding: 8px var(--page-gutter) max(8px, env(safe-area-inset-bottom));
+  flex-shrink: 0;
+}
+.dialogFooter button {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: none;
+  border: 0;
+  color: #a4b9ca;
+  font-size: 11px;
+  min-height: 44px;
+  padding: 0;
+}
+.dialogFooter button:hover {
+  color: white;
+}
+.dialogFooter > span {
+  font:
+    9px var(--font-mono),
+    monospace;
+  color: #b4c9da;
+}
+.dialogFooter i {
+  font-style: normal;
+  color: #8196aa;
+  padding-left: 8px;
+}
+@media (max-width: 767px) {
+  .closeButton span {
+    display: none;
+  }
+  .dialogBackdrop {
+    padding: 0;
+    backdrop-filter: none;
+  }
+  .dialog {
+    height: 100%;
+    max-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+  .dialogHeader {
+    padding: 0 20px;
+    min-height: 62px;
+  }
+  .dialogCategory {
+    display: none;
+  }
+  .dialogBody {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .dialogVisual {
+    height: 365px;
+    min-height: 365px;
+    padding: 18px 22px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .detailPlanet {
+    inset: -7% 0 15%;
+  }
+  .dialogPlanetNumber {
+    top: 18px;
+    left: 22px;
+  }
+  .modelNote {
+    font-size: 7px;
+    max-width: 270px;
+    margin-top: 8px;
+  }
+  .viewToolbar > span {
+    font-size: 6.5px;
+  }
+  .dialogScroll {
+    overflow: visible;
+    min-height: auto;
+    flex-shrink: 0;
+  }
+  .detailContent {
+    padding: 28px 24px;
+  }
+  .detailContent h2 {
+    font-size: 54px;
+  }
+  .detailHeadline {
+    font-size: 13px;
+  }
+  .introduction {
+    font-size: 12px;
+  }
+  .chapter p {
+    font-size: 12px;
+  }
+  .chapter h3 {
+    font-size: 14px;
+  }
+  .dialogFooter {
+    padding: 0 22px;
+    min-height: 64px;
+  }
+  .dialogFooter button {
+    font-size: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dialogBackdrop * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+.dialogBackdrop:not([open]) {
+  display: none;
+}
+.dialogBackdrop::backdrop {
+  background: #02050b;
+}
+@media (max-width: 767px) {
+  .dialogHeader {
+    padding: 8px 20px;
+    min-height: 64px;
+  }
+  .detailContent {
+    padding: 28px 24px;
+  }
+  .dialogVisual {
+    height: min(58svh, 470px);
+    min-height: 340px;
+  }
+  .dialogFooter {
+    padding: 8px 22px max(8px, env(safe-area-inset-bottom));
+  }
+  .dialogBody {
+    display: flex;
+  }
+}
+@keyframes contentEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.detailTabs > div {
+  width: 100%;
+}

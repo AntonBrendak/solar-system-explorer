@@ -1,0 +1,470 @@
+{
+  "/textures/mercury/mercuryMap.jpg": {
+    "1k": {
+      "url": "/textures/runtime/mercury/surface-1k.webp",
+      "width": 1024,
+      "height": 512,
+      "bytes": 116822
+    },
+    "2k": {
+      "url": "/textures/runtime/mercury/surface-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 495040
+    },
+    "4k": {
+      "url": "/textures/runtime/mercury/surface-4k.webp",
+      "width": 4096,
+      "height": 2048,
+      "bytes": 2905122
+    },
+    "8k": {
+      "url": "/textures/runtime/mercury/surface-8k.webp",
+      "width": 8192,
+      "height": 4096,
+      "bytes": 13909854
+    }
+  },
+  "/textures/mercury/mercury-height-8k.png": {
+    "1k": {
+      "url": "/textures/runtime/mercury/height-1k.webp",
+      "width": 1024,
+      "height": 512,
+      "bytes": 261944
+    },
+    "2k": {
+      "url": "/textures/runtime/mercury/height-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 850852
+    },
+    "4k": {
+      "url": "/textures/runtime/mercury/height-4k.webp",
+      "width": 4096,
+      "height": 2048,
+      "bytes": 2470868
+    },
+    "8k": {
+      "url": "/textures/runtime/mercury/height-8k.webp",
+      "width": 8192,
+      "height": 4096,
+      "bytes": 6419370
+    }
+  },
+  "/textures/mercury/mercury-normal-8k.png": {
+    "1k": {
+      "url": "/textures/runtime/mercury/normal-1k.webp",
+      "width": 1024,
+      "height": 512,
+      "bytes": 767290
+    },
+    "2k": {
+      "url": "/textures/runtime/mercury/normal-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 3006120
+    },
+    "4k": {
+      "url": "/textures/runtime/mercury/normal-4k.webp",
+      "width": 4096,
+      "height": 2048,
+      "bytes": 10246218
+    },
+    "8k": {
+      "url": "/textures/runtime/mercury/normal-8k.webp",
+      "width": 8192,
+      "height": 4096,
+      "bytes": 19997884
+    }
+  },
+  "/textures/venus/venus-clouds-4k.jpg": {
+    "1k": {
+      "url": "/textures/runtime/venus/clouds-1k.webp",
+      "width": 1024,
+      "height": 512,
+      "bytes": 16254
+    },
+    "2k": {
+      "url": "/textures/runtime/venus/clouds-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 44944
+    },
+    "4k": {
+      "url": "/textures/runtime/venus/clouds-4k.webp",
+      "width": 4096,
+      "height": 2048,
+      "bytes": 257080
+    },
+    "8k": {
+      "url": "/textures/runtime/venus/clouds-4k.webp",
+      "width": 4096,
+      "height": 2048,
+      "bytes": 257080
+    }
+  },
+  "/textures/earth/runtime/earth-day.webp": {
+    "1k": {
+      "url": "/textures/runtime/earth/surface-1k.webp",
+      "width": 1024,
+      "height": 512,
+      "bytes": 65646
+    },
+    "2k": {
+      "url": "/textures/runtime/earth/surface-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 209258
+    },
+    "4k": {
+      "url": "/textures/runtime/earth/surface-4k.webp",
+      "width": 4096,
+      "height": 2048,
+      "bytes": 884772
+    },
+    "8k": {
+      "url": "/textures/runtime/earth/surface-4k.webp",
+      "width": 4096,
+      "height": 2048,
+      "bytes": 884772
+    }
+  },
+  "/textures/earth/runtime/earth-normal.png": {
+    "1k": {
+      "url": "/textures/runtime/earth/normal-1k.webp",
+      "width": 1024,
+      "height": 512,
+      "bytes": 67076
+    },
+    "2k": {
+      "url": "/textures/runtime/earth/normal-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 302310
+    },
+    "4k": {
+      "url": "/textures/runtime/earth/normal-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 302310
+    },
+    "8k": {
+      "url": "/textures/runtime/earth/normal-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 302310
+    }
+  },
+  "/textures/earth/runtime/earth-roughness.png": {
+    "1k": {
+      "url": "/textures/runtime/earth/roughness-1k.webp",
+      "width": 1024,
+      "height": 512,
+      "bytes": 76344
+    },
+    "2k": {
+      "url": "/textures/runtime/earth/roughness-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 192416
+    },
+    "4k": {
+      "url": "/textures/runtime/earth/roughness-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 192416
+    },
+    "8k": {
+      "url": "/textures/runtime/earth/roughness-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 192416
+    }
+  },
+  "/textures/earth/runtime/earth-ocean.png": {
+    "1k": {
+      "url": "/textures/runtime/earth/ocean-1k.webp",
+      "width": 1024,
+      "height": 512,
+      "bytes": 66992
+    },
+    "2k": {
+      "url": "/textures/runtime/earth/ocean-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 167226
+    },
+    "4k": {
+      "url": "/textures/runtime/earth/ocean-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 167226
+    },
+    "8k": {
+      "url": "/textures/runtime/earth/ocean-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 167226
+    }
+  },
+  "/textures/earth/runtime/earth-night.webp": {
+    "1k": {
+      "url": "/textures/runtime/earth/night-1k.webp",
+      "width": 1024,
+      "height": 512,
+      "bytes": 21888
+    },
+    "2k": {
+      "url": "/textures/runtime/earth/night-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 85326
+    },
+    "4k": {
+      "url": "/textures/runtime/earth/night-4k.webp",
+      "width": 4096,
+      "height": 2048,
+      "bytes": 380226
+    },
+    "8k": {
+      "url": "/textures/runtime/earth/night-4k.webp",
+      "width": 4096,
+      "height": 2048,
+      "bytes": 380226
+    }
+  },
+  "/textures/earth/runtime/clouds-fallback.webp": {
+    "1k": {
+      "url": "/textures/runtime/earth/clouds-1k.webp",
+      "width": 1024,
+      "height": 512,
+      "bytes": 290252
+    },
+    "2k": {
+      "url": "/textures/runtime/earth/clouds-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 1080056
+    },
+    "4k": {
+      "url": "/textures/runtime/earth/clouds-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 1080056
+    },
+    "8k": {
+      "url": "/textures/runtime/earth/clouds-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 1080056
+    }
+  },
+  "/textures/mars/mars-8k.jpg": {
+    "1k": {
+      "url": "/textures/runtime/mars/surface-1k.webp",
+      "width": 1024,
+      "height": 512,
+      "bytes": 77048
+    },
+    "2k": {
+      "url": "/textures/runtime/mars/surface-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 274120
+    },
+    "4k": {
+      "url": "/textures/runtime/mars/surface-4k.webp",
+      "width": 4096,
+      "height": 2048,
+      "bytes": 1289464
+    },
+    "8k": {
+      "url": "/textures/runtime/mars/surface-8k.webp",
+      "width": 8192,
+      "height": 4096,
+      "bytes": 5305848
+    }
+  },
+  "/textures/mars/mars-height-8k.png": {
+    "1k": {
+      "url": "/textures/runtime/mars/height-1k.webp",
+      "width": 1024,
+      "height": 512,
+      "bytes": 125264
+    },
+    "2k": {
+      "url": "/textures/runtime/mars/height-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 414404
+    },
+    "4k": {
+      "url": "/textures/runtime/mars/height-4k.webp",
+      "width": 4096,
+      "height": 2048,
+      "bytes": 1265086
+    },
+    "8k": {
+      "url": "/textures/runtime/mars/height-8k.webp",
+      "width": 8192,
+      "height": 4096,
+      "bytes": 3849728
+    }
+  },
+  "/textures/mars/mars-normal-8k.png": {
+    "1k": {
+      "url": "/textures/runtime/mars/normal-1k.webp",
+      "width": 1024,
+      "height": 512,
+      "bytes": 427182
+    },
+    "2k": {
+      "url": "/textures/runtime/mars/normal-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 1744640
+    },
+    "4k": {
+      "url": "/textures/runtime/mars/normal-4k.webp",
+      "width": 4096,
+      "height": 2048,
+      "bytes": 6611348
+    },
+    "8k": {
+      "url": "/textures/runtime/mars/normal-8k.webp",
+      "width": 8192,
+      "height": 4096,
+      "bytes": 19382706
+    }
+  },
+  "/textures/jupiter/jupiterMap.jpg": {
+    "1k": {
+      "url": "/textures/runtime/jupiter/surface-1k.webp",
+      "width": 1024,
+      "height": 512,
+      "bytes": 51776
+    },
+    "2k": {
+      "url": "/textures/runtime/jupiter/surface-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 149992
+    },
+    "4k": {
+      "url": "/textures/runtime/jupiter/surface-4k.webp",
+      "width": 4096,
+      "height": 2048,
+      "bytes": 650994
+    },
+    "8k": {
+      "url": "/textures/runtime/jupiter/surface-4k.webp",
+      "width": 4096,
+      "height": 2048,
+      "bytes": 650994
+    }
+  },
+  "/textures/saturn/saturnMap.jpg": {
+    "1k": {
+      "url": "/textures/runtime/saturn/surface-1k.webp",
+      "width": 1024,
+      "height": 512,
+      "bytes": 12650
+    },
+    "2k": {
+      "url": "/textures/runtime/saturn/surface-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 39344
+    },
+    "4k": {
+      "url": "/textures/runtime/saturn/surface-4k.webp",
+      "width": 4096,
+      "height": 2048,
+      "bytes": 170748
+    },
+    "8k": {
+      "url": "/textures/runtime/saturn/surface-4k.webp",
+      "width": 4096,
+      "height": 2048,
+      "bytes": 170748
+    }
+  },
+  "/textures/saturn/saturn-ring.png": {
+    "1k": {
+      "url": "/textures/runtime/saturn/rings-1k.webp",
+      "width": 1024,
+      "height": 16,
+      "bytes": 4804
+    },
+    "2k": {
+      "url": "/textures/runtime/saturn/rings-2k.webp",
+      "width": 2048,
+      "height": 32,
+      "bytes": 8938
+    },
+    "4k": {
+      "url": "/textures/runtime/saturn/rings-4k.webp",
+      "width": 4096,
+      "height": 64,
+      "bytes": 13810
+    },
+    "8k": {
+      "url": "/textures/runtime/saturn/rings-4k.webp",
+      "width": 4096,
+      "height": 64,
+      "bytes": 13810
+    }
+  },
+  "/textures/uranus/uranus-8k.webp": {
+    "1k": {
+      "url": "/textures/runtime/uranus/surface-1k.webp",
+      "width": 1024,
+      "height": 512,
+      "bytes": 3056
+    },
+    "2k": {
+      "url": "/textures/runtime/uranus/surface-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 9576
+    },
+    "4k": {
+      "url": "/textures/runtime/uranus/surface-4k.webp",
+      "width": 4096,
+      "height": 2048,
+      "bytes": 34340
+    },
+    "8k": {
+      "url": "/textures/runtime/uranus/surface-8k.webp",
+      "width": 8192,
+      "height": 4096,
+      "bytes": 106490
+    }
+  },
+  "/textures/neptune/neptune-8k.webp": {
+    "1k": {
+      "url": "/textures/runtime/neptune/surface-1k.webp",
+      "width": 1024,
+      "height": 512,
+      "bytes": 6318
+    },
+    "2k": {
+      "url": "/textures/runtime/neptune/surface-2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 19826
+    },
+    "4k": {
+      "url": "/textures/runtime/neptune/surface-4k.webp",
+      "width": 4096,
+      "height": 2048,
+      "bytes": 113456
+    },
+    "8k": {
+      "url": "/textures/runtime/neptune/surface-8k.webp",
+      "width": 8192,
+      "height": 4096,
+      "bytes": 467956
+    }
+  }
+}

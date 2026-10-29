@@ -8,10 +8,6 @@ await mkdir("public/textures", {
   recursive: true,
 });
 
-await sharp(input)
-  .greyscale()
-  .linear(-0.7, 217)
-  .png()
-  .toFile(output);
+await sharp(input).greyscale().linear(-0.7, 217).png().toFile(output);
 
 console.log("Earth roughness map created");

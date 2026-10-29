@@ -1,0 +1,31 @@
+.page {
+  --bg: #070a0f;
+  --surface: #0e141e;
+  --text: #edf2f7;
+  --muted: #8c9aa9;
+  --accent: #a5cae8;
+  --line: #c2d5ed18;
+  color: var(--text);
+  background: var(--bg);
+  overflow: clip;
+  position: relative;
+}
+.page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("/grain.png");
+  background-size: 160px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .page * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+.page[data-paused="true"] {
+  --motion-state: paused;
+}

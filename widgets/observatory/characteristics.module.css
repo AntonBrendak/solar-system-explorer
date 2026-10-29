@@ -1,0 +1,22 @@
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 20px;
+  margin: 0;
+  animation: contentEnter 0.35s ease both;
+}
+@media (max-width: 767px) {
+  .metrics {
+    column-gap: 18px;
+  }
+}
+@keyframes contentEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

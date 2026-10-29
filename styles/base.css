@@ -43,9 +43,11 @@ button:disabled {
   font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
 }
 .page-container {
-  width: min(calc(100% - 112px), 1450px);
+  width: calc(100% - 2 * clamp(20px, 4vw, 88px));
+  max-width: none;
   margin-inline: auto;
 }
+
 .mono-label {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 10px;

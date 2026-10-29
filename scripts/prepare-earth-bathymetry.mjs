@@ -1,4 +1,3 @@
-
 import sharp from "sharp";
 import { mkdir } from "node:fs/promises";
 
@@ -8,7 +7,7 @@ const bathyPath = "assets/earth/earth_ocean_bathymetry.jpg";
 
 const output = "public/textures/earth/earthDayOcean.png";
 
-// Сила влияния батиметрии
+// Bathymetry contribution to ocean brightness.
 const STRENGTH = 0.7;
 
 const metadata = await sharp(dayPath).metadata();
@@ -17,28 +16,24 @@ const width = metadata.width;
 const height = metadata.height;
 
 if (!width || !height) {
-  throw new Error("Не удалось прочитать earthDay.jpg");
+  throw new Error("Unable to read earthDay.jpg");
 }
 
-// Проверяем пропорции карт
 for (const path of [maskPath, bathyPath]) {
   const meta = await sharp(path).metadata();
 
   if (!meta.width || !meta.height) {
-    throw new Error(`Ошибка изображения: ${path}`);
+    throw new Error(`Invalid image: ${path}`);
   }
 
   const ratio = meta.width / meta.height;
   const targetRatio = width / height;
 
   if (Math.abs(ratio - targetRatio) > 0.02) {
-    throw new Error(
-      `Несовместимые пропорции: ${path}`
-    );
+    throw new Error(`Incompatible aspect ratios: ${path}`);
   }
 }
 
-// Загружаем карты в RGB-буферы
 async function loadImage(path) {
   const { data, info } = await sharp(path)
     .resize(width, height)
@@ -48,7 +43,7 @@ async function loadImage(path) {
     .toBuffer({ resolveWithObject: true });
 
   if (info.channels !== 3) {
-    throw new Error(`Ожидалось RGB: ${path}`);
+    throw new Error(`Expected RGB: ${path}`);
   }
 
   return data;
@@ -65,18 +60,14 @@ function clamp(value) {
 }
 
 for (let i = 0; i < result.length; i += 3) {
-  // Маска: белое — вода, чёрное — суша
+  // The mask uses white for water and black for land.
   const ocean = mask[i] / 255;
 
   if (ocean < 0.01) continue;
 
-  // Яркость батиметрического изображения
   const brightness =
-    (0.2126 * bathy[i] +
-      0.7152 * bathy[i + 1] +
-      0.0722 * bathy[i + 2]) / 255;
+    (0.2126 * bathy[i] + 0.7152 * bathy[i + 1] + 0.0722 * bathy[i + 2]) / 255;
 
-  // Небольшое изменение яркости океана
   const variation = (brightness - 0.5) * STRENGTH;
 
   const factor = 1 + variation * ocean;

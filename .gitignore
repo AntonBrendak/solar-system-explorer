@@ -4,6 +4,7 @@ node_modules/
 out/
 build/
 .env*
+!.env.example
 .DS_Store
 *.log
 *.tsbuildinfo
@@ -15,3 +16,8 @@ coverage/
 Thumbs.db
 Desktop.ini
 data/noaa-lightning.json
+test-results/
+playwright-report/
+/dist/
+.vinext/
+.wrangler/

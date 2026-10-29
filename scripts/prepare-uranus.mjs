@@ -17,16 +17,12 @@ if (!response.ok) {
 
 const buffer = Buffer.from(await response.arrayBuffer());
 
-await writeFile(
-  fileURLToPath(new URL("uranus-source.jpg", outDir)),
-  buffer
-);
+await writeFile(fileURLToPath(new URL("uranus-source.jpg", outDir)), buffer);
 
 const fullWidth = 8192;
 const fullHeight = 4096;
 const seamBlend = 32;
 
-// База 8K
 const base = sharp(buffer).resize(fullWidth, fullHeight, {
   fit: "fill",
   kernel: sharp.kernel.lanczos3,
@@ -42,23 +38,20 @@ const channels = raw.info.channels;
 const width = raw.info.width;
 const height = raw.info.height;
 
-// Делаем плавное совпадение левого и правого краёв.
+// Blend the longitude seam without adding visible bands.
 for (let y = 0; y < height; y++) {
   for (let x = 0; x < seamBlend; x++) {
     const t = x / Math.max(seamBlend - 1, 1);
 
-    const leftIndex =
-      (y * width + x) * channels;
+    const leftIndex = (y * width + x) * channels;
 
-    const rightIndex =
-      (y * width + (width - seamBlend + x)) * channels;
+    const rightIndex = (y * width + (width - seamBlend + x)) * channels;
 
     for (let c = 0; c < channels; c++) {
       const left = pixels[leftIndex + c];
       const right = pixels[rightIndex + c];
 
-      const mixed =
-        Math.round(left * (1 - t) + right * t);
+      const mixed = Math.round(left * (1 - t) + right * t);
 
       pixels[leftIndex + c] = mixed;
       pixels[rightIndex + c] = mixed;
@@ -97,7 +90,7 @@ await writeFile(
     "- uranus-8k.webp",
     "- uranus-lite.webp",
   ].join("\n"),
-  "utf8"
+  "utf8",
 );
 
 console.log("Uranus textures prepared:");

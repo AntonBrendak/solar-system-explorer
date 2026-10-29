@@ -1,0 +1,242 @@
+.card {
+  --light-x: 50%;
+  --light-y: 20%;
+  width: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  border: 1px solid #bad2ec16;
+  border-radius: 5px;
+  padding: 20px;
+  background: linear-gradient(155deg, #111923 0%, #0b111a 70%);
+  overflow: hidden;
+  color: var(--text);
+  transition:
+    border-color 0.3s,
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.4s;
+  animation: cardEnter 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+  height: 100%;
+}
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    350px circle at var(--light-x) var(--light-y),
+    color-mix(in srgb, var(--planet-accent) 10%, transparent),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.card::after {
+  content: "";
+  position: absolute;
+  width: 35%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--planet-accent),
+    transparent
+  );
+  top: 0;
+  left: 32.5%;
+  opacity: 0.25;
+  transition: opacity 0.3s;
+}
+.card:hover,
+.card:focus-visible {
+  transform: translateY(-6px);
+  border-color: color-mix(in srgb, var(--planet-accent) 35%, transparent);
+  box-shadow: 0 18px 35px #0003;
+}
+.card:hover::before,
+.card:focus-visible::before {
+  opacity: 1;
+}
+.card:hover::after {
+  opacity: 0.9;
+}
+.card:nth-child(2) {
+  animation-delay: 0.04s;
+}
+.card:nth-child(3) {
+  animation-delay: 0.08s;
+}
+.card:nth-child(4) {
+  animation-delay: 0.12s;
+}
+.card:nth-child(5) {
+  animation-delay: 0.04s;
+}
+.card:nth-child(6) {
+  animation-delay: 0.08s;
+}
+.card:nth-child(7) {
+  animation-delay: 0.12s;
+}
+.card:nth-child(8) {
+  animation-delay: 0.16s;
+}
+.cardTop {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono), monospace;
+  font-size: 7px;
+  color: #7f93a7;
+  position: relative;
+  letter-spacing: 0.04em;
+}
+.cardTop > span:nth-child(2) {
+  margin-left: auto;
+  text-transform: uppercase;
+  font-size: 6.5px;
+}
+.cardTop svg {
+  color: #a3b3c1;
+  transition: transform 0.3s;
+  margin-left: 8px;
+}
+.card:hover .cardTop svg {
+  transform: translate(2px, -2px);
+}
+.cardVisual {
+  position: relative;
+  width: calc(100% + 22px);
+  margin: 8px -11px -4px;
+  aspect-ratio: 1;
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.card:hover .cardVisual {
+  transform: scale(1.04);
+}
+.cardOrbit {
+  position: absolute;
+  width: 83%;
+  height: 40%;
+  top: 32%;
+  left: 8.5%;
+  border: 1px solid #b9d1ea0b;
+  border-radius: 50%;
+  transform: rotate(-25deg);
+}
+.cardCopy {
+  position: relative;
+  margin-top: auto;
+}
+.cardCopy h3 {
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(23px, 2.1vw, 33px);
+  font-weight: 450;
+  letter-spacing: -0.035em;
+  margin: 0 0 8px;
+}
+.cardCopy p {
+  font-size: 10px;
+  line-height: 1.7;
+  color: #8496a7;
+  margin: 0;
+  min-height: 34px;
+  max-width: 220px;
+}
+.cardBottom {
+  position: relative;
+  width: 100%;
+  border-top: 1px solid #c1d4e817;
+  padding-top: 17px;
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+.cardBottom > span:first-child {
+  font:
+    6.5px var(--font-mono),
+    monospace;
+  letter-spacing: 0.13em;
+  color: #8196aa;
+}
+.cardBottom > span:last-child {
+  font-size: 11px;
+  color: #b2c1cf;
+}
+.cardBottom small {
+  font-size: 8px;
+  color: #8196aa;
+}
+@media (max-width: 1150px) {
+  .card {
+    padding: 24px;
+  }
+  .cardVisual {
+    max-height: 300px;
+  }
+  .cardTop,
+  .cardTop > span:nth-child(2) {
+    font-size: 8px;
+  }
+  .cardCopy h3 {
+    font-size: 32px;
+  }
+  .cardCopy p {
+    font-size: 12px;
+    max-width: none;
+  }
+}
+@media (max-width: 767px) {
+  .card {
+    padding: 22px;
+  }
+  .cardVisual {
+    width: calc(100% + 24px);
+    max-height: 330px;
+    margin-inline: -12px;
+  }
+  .cardCopy h3 {
+    font-size: 32px;
+  }
+  .cardCopy p {
+    min-height: auto;
+    font-size: 11px;
+  }
+  .cardBottom > span:first-child {
+    font-size: 8px;
+  }
+  .cardBottom > span:last-child {
+    font-size: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card:hover {
+    transform: none;
+  }
+  .card:hover .cardVisual {
+    transform: none;
+  }
+}
+.card:hover .cardOrbit {
+  transform: rotate(-15deg) scale(1.05);
+  border-color: #b9d1ea30;
+}
+.cardOrbit {
+  transition:
+    transform 0.8s ease,
+    border-color 0.5s;
+}
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,57 +1,85 @@
-# Object scenes
+# Planet renderer contracts
 
-`PlanetVisual` is the shared entry point for the hero, selector, cards and lab. The loading mechanism has no Earth-specific branches. Object content lives in `data/planets.ts`; its optional scenes live in `components/planets/registry.ts`.
+## Source ownership
 
-| File | Responsibility |
-| --- | --- |
-| `components/planets/PlanetVisual.tsx` | Defer WebGL until after paint, keep a cache of visited objects, show artwork until the first prepared frame |
-| `components/planets/PlanetStage.tsx` | One persistent Canvas per visual frame, camera, controls, progressive replacement and GPU preparation |
-| `components/planets/types.ts` | Shared scene and registry contracts |
-| `lib/idle-task.ts` | Cancellable scheduling and yields between texture uploads |
-| `hooks/useSceneMotion.ts` | Pause, tab visibility and reduced motion |
-| `components/planetPreview/EarthPreview.tsx` | Full Earth geometry and weather layers; no Canvas |
-| `components/planets/LiteEarth.tsx` | Lightweight Earth geometry and two 1K textures; no Canvas or weather requests |
-| `components/earth/EarthEnvironment.tsx` | Shared sunlight and lighting for both Earth versions |
-| `data/earth-textures.ts` | Runtime texture URLs |
-
-## Register any object
-
-Write client components that return Three objects, not another Canvas. A scene receives `PlanetSceneProps`: `active` and `animate`. Honor both when updating animation or doing frame work. Center the object around the origin with a radius near 2, or scale its scene group to fit.
-
-```tsx
-import { lazy } from "react";
-
-// Entry in components/planets/registry.ts, matching the catalog ID:
-mars: {
-  Scene: lazy(() => import("@/components/planetPreview/MarsScene")),
-  PreviewScene: lazy(() => import("@/components/planetPreview/MarsPreviewScene")),
-  Environment: lazy(() => import("@/components/planetPreview/MarsEnvironment")),
-},
+```text
+features/planet-viewer/
+  index.ts                Public API for widgets
+  model/                  Cache, resources, texture ownership and contracts
+  ui/                     Canvas host, viewports, views and staged readiness
+  scenes/
+    registry.ts           Lazy registration and source credits
+    <planet>/             Scene, environment, shaders and orientation helpers
 ```
 
-`Scene` is the detailed version. `PreviewScene` is optional: it appears first and is used exclusively in selector thumbnails. `Environment` is an optional wrapper receiving `PlanetEnvironmentProps`: scene props plus `children` and `lighting`. Keep object-specific context available in both lighting modes, but enable its physical scene lights only when `lighting === "scene"`. The shared stage supplies front and fill lights in `"studio"` mode for readable selector previews. Without an environment wrapper, the stage supplies default lighting. Keep lighting outside the individual geometry scenes so preparation and replacement use the same lighting setup. Optional `credits` and `rings` are also configured in the registry.
+For example, Earth geometry, clouds, lightning, texture metadata and solar calculations belong together in `scenes/earth/`. A planet-specific calculation does not belong in a generic root `lib/` directory.
 
-Use React Suspense-compatible loaders, such as `useLoader`, for cached textures. The stage uploads scene material textures and shader-uniform textures one at a time during idle turns, then calls `compileAsync`. Avoid hooks that synchronously upload every texture on mount. Dispose owned resources only on unmount; loader cache assets must stay reusable.
+## View and scene lifetime
 
-## Presentation and resource lifetime
+`PlanetCanvasProvider` owns the persistent renderer host, active viewport registration and top-layer relocation. `useSceneCache` owns Full-scene lifetime; `scene-cache.ts` defines the LRU policy. `PlanetViewport` owns visibility, poster fallback and the current DOM target.
 
-| Presentation | Rendering and motion |
-| --- | --- |
-| `hero` | Preview, then full scene in the same Canvas; slow camera orbit and dragging |
-| `thumbnail` | Preview scene only, rotating around its Y axis; artwork if no preview is registered |
-| `card` | Preview, then full scene in the card frame; slow camera orbit |
-| `lab` | The same progressive scene with orbit dragging |
+Cards mount lightweight `ViewportScene` previews while visible. `SharedPlanetCanvas` retains Full views keyed by planet until eviction. Returning to a cached planet changes its target without remounting the prepared model. Camera controls reconnect to that target. Each View has its own scene, camera and lighting; root Canvas dimensions must remain equal to the browser viewport.
 
-A frame creates its Canvas only when a registered scene is needed, after the interface paints. All visited scenes remain mounted in that Canvas. Inactive objects are invisible and receive `active=false`; if no cached scene is selected, the entire render loop stops. Returning to a prepared object reuses its geometries, materials, camera and GPU textures. The cache is released when the containing frame/page unmounts. Each selector preview has its own small Canvas; it never mounts the detailed scene or its weather subscriptions.
+`PlanetStage` supplies progressive preparation and separate first-frame/Full-quality readiness. It uploads textures across idle turns, calls `compileAsync`, then reveals the model only after a prepared frame. Preview/Full replacement is atomic. `shared/ui/ErrorBoundary` is reused for scene and renderer failures.
 
-During initial loading only the artwork is visible. After the first prepared Canvas frame, the artwork is hidden. A detailed scene is prepared invisibly while the preview remains visible; an atomic visibility switch replaces the preview and removes its geometry. There is no opacity crossfade between versions. Shader compilation uses the parallel compilation extension where available; individual WebGL uploads still run on the browser's rendering thread, with idle yields between them.
+The native dialog moves the same Canvas host into the browser top layer. Cleanup restores the host before removing the dialog. Keep the actual DOM target in its intended layout region; the Canvas host does not consume pointer events.
 
-The image spin layer stays mounted so existing GSAP targets remain valid, but it is hidden while a prepared scene is active. Models are siblings of that layer and never receive its 2D rotation. Canvas measurements use layout dimensions (`offsetSize`) so CSS hover/entrance scaling cannot enlarge the drawing buffer beyond its container and crop it. All picker objects share the same hover/focus scale and glow. The global motion control also governs the selector previews.
+## Cache and resource policy
 
-## Earth runtime assets
+At most two Full scenes are retained. The RGBA8-equivalent texture budget is 96 MiB for a reported device memory of at most 2 GB, 160 MiB for at most 4 GB, and 384 MiB otherwise. Evict inactive scenes oldest first. One active model may exceed the budget alone: current 8K Mercury and Mars maps estimate approximately 512 MiB each. An oversized inactive model is released; a same-commit hero/dialog transfer preserves its active ownership.
 
-Run `node scripts/prepare-earth-runtime.mjs` after changing source maps. It creates bounded runtime assets in `public/textures/earth/runtime/`: a 4K surface/night map, 2K material maps and a cloud fallback. Original source files remain available. The cloud fallback uses `cloudsLive.png` when supplied, otherwise `earthClouds.jpg`. Live cloud refresh and disposal still belong to `EarthClouds`.
+The estimate uses source width, height, four bytes per pixel and generated mipmaps. It excludes geometry, framebuffers, driver overhead and format-specific allocation differences. Visible lightweight cards are outside the Full-cache budget. Decoded loader images may remain in CPU memory after GPU eviction; the budget is not a total process-memory limit.
 
-The live IR-derived cloud map has a bright background at high latitudes; its [polar regions are mirrored](https://github.com/matteason/live-cloud-maps#limitations). The coverage shader shared by clouds and lightning blends to the local grayscale `previewClouds` map between 40° and 60° latitude in both hemispheres. Clouds beyond 60° are an artistic static fallback, not live weather; equatorial clouds retain the live feed and frame interpolation. Keep this coverage calculation shared so lightning follows the visible clouds.
+Use `model/useSceneTexture` for loader maps. It counts mounted consumers and disposes GPU allocations after the last consumer unmounts. It avoids eager uploads of originals when a scene renders owned clones. Dispose clones and procedural resources in their owning component. R3F disposes declarative geometry and materials; do not duplicate that disposal through stale refs.
 
-Run `npm run lint`, `npm run typecheck` and `npm run build`. Validate deferred loading, one visible model, preview/full replacement, return-to-object resource reuse, selector axis rotation, pause, reduced motion, mobile layout and fallback behavior.
+Inactive scenes stop frame work, controls and weather polling. Weather effects abort requests and release transient maps when deactivated. Continuous rendering stops for reduced motion, explicit pause, hidden tabs and no active views. Manual controls may request frames while paused.
+
+## Progressive texture detail
+
+`PreparedModel` owns a single prepared resource group and its first rendered frame. `PlanetStage` keeps the current Full tier mounted while preparing the next tier. Once ready, the next group replaces it atomically; the old group releases its GPU resources. Camera and controls remain outside these groups.
+
+`texture-quality.ts` selects a lightweight starting tier from memory and network capabilities. All devices continue toward the highest level supported by their GPU and the actual source: 1K → 2K → 4K → 8K. Screen size does not impose a permanent lower ceiling. Slow networks and Save-Data increase the interval between upgrades. Upgrades stop while the view is inactive or the document is hidden. Visitors do not choose quality.
+
+`texture-manifest.json` maps original model URLs to generated runtime variants. `scripts/prepare-planet-tiers.mjs` resizes without enlargement, encodes WebP, and records actual dimensions/encoded byte sizes. Color maps are compressed; data maps remain lossless except when near-lossless compression is necessary to stay below Cloudflare's 25 MiB per-file limit. Original sources are retained.
+
+Mercury, Mars, Uranus and Neptune have genuine 8K source maps. Earth, Venus, Jupiter and Saturn use their highest available source dimensions, currently up to 4K. Do not manufacture 8K detail by enlarging a smaller source.
+
+A transition temporarily retains two adjacent tiers. The cache budget is a retention budget, not a hard peak-allocation limit. Context loss clears prepared scene ownership and lowers the texture ceiling for the restored session. An 8K allocation may therefore recover at 4K when the GPU cannot sustain it.
+
+`useSceneTexture` tracks failed loader batches. Retry clears only failed suspense-loader entries. A failed higher tier leaves the last working tier interactive; retry and revisiting the planet resume preparation. Fatal preview errors have their own resettable boundary and poster fallback.
+
+## Scene contract
+
+Scenes receive `active` and `animate`. Honor them for frame work. Environments also receive `children` and `lighting`:
+
+- `studio` uses shared preview lighting.
+- `scene` enables the planet's physical lighting.
+
+Keep required planet context available in both modes. Return Three objects, never another Canvas. Center models near the origin with radius close to 2. Saturn receives a presentation scale adjustment for its rings. Adaptive DPR starts at no more than 1.5 and drops on sustained performance decline.
+
+Keep scene uniforms and astronomical coordinate conventions explicit. Update shared vectors in place when materials retain their references. Use UTC-derived time when returning to a scene must preserve phase.
+
+## Adding or changing a planet
+
+1. Add IDs and numeric metadata under `entities/planet/`.
+2. Add matching story keys in both message catalogs.
+3. Put geometry, shaders, environment, texture metadata and orientation helpers in `scenes/<planet>/`.
+4. Register lazy Scene, PreviewScene, Environment and credits in `scenes/registry.ts`.
+5. Prepare assets through `scripts/`, retaining source attribution and licenses.
+6. Run architecture/catalog tests and the complete validation commands in [README](../README.md#validation).
+
+Verify Full readiness, rings, dragging, pause, reduced motion, fallback, cached return, offscreen return and resource release. Avoid changing resource ownership and shader behavior in the same refactor unless required.
+
+## Scientific data and Earth weather
+
+The numeric catalog uses NASA NSSDCA equatorial diameters and sidereal rotation consistently. Negative periods display as positive durations with a retrograde label. Astronomical calculations and numeric values stay separate from translated presentation.
+
+Run `node scripts/prepare-earth-runtime.mjs` after changing Earth source maps. The IR-derived cloud source has a bright high-latitude background and [mirrored poles](https://github.com/matteason/live-cloud-maps#limitations). Cloud and lightning coverage transitions to an artistic local map between 40 and 60 degrees. Polar clouds are not live measurements.
+
+`features/weather/server/` processes external observations. Cloud volume, lightning timing and several atmospheric effects are simulations, not forecasts. Keep the model usable with local maps when external data is unavailable.
+
+## Diagnostics
+
+Add `diagnostics=1` to expose `window.__ORBITAL_RENDERER__.snapshot()`. It reports Canvas dimensions, actual Three.js texture/geometry/program counts, resident textures, estimated bytes, Full-cache entries, preparation counts by texture tier and up to 50 activation timings. It adds no product UI or console output.
+
+Browser tests save `renderer-resource-samples.json`, verify cached revisits without repeated preparation, check root Canvas dimensions and pixel placement, and compare resource counts across two complete planet cycles. The viewport also exposes `data-texture-tier`, `data-texture-target` and `data-texture-state` for staged readiness assertions. These tests detect regressions; they do not measure exact VRAM or guarantee hardware FPS.
