@@ -1,147 +1,33 @@
 
 "use client";
 
-import { useRef } from "react";
-import { useFrame } from "@react-three/fiber";
 import {
-  Vector3,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
+
+import {
+  useFrame,
+  useThree,
+} from "@react-three/fiber";
+
+import {
   type Group,
   type DirectionalLight,
 } from "three";
-import type { PlanetEnvironmentProps } from "@/components/planets/types";
 
-// ============================================
-// ASTRONOMICAL CONSTANTS
-// ============================================
+import type {
+  PlanetEnvironmentProps,
+} from "@/components/planets/types";
 
-const DEG = Math.PI / 180;
-const TAU = Math.PI * 2;
-const DAY_MS = 86_400_000;
+import {
+  getJupiterState,
+  JUPITER_SPIN_RAD_PER_MS,
+} from "@/lib/jupiter-state";
 
-const J2000_MS = Date.UTC(2000, 0, 1, 12);
-
-// IAU System III
-const ROTATION_DEG_PER_DAY = 870.536;
-const ROTATION_DEG_J2000 = 284.95;
-
-// Jupiter's axial obliquity
-const AXIAL_TILT_RAD = 3.13 * DEG;
-
-// Circular-orbit approximation
-const EARTH_ORBIT_DAYS = 365.256;
-const JUPITER_ORBIT_DAYS = 4332.589;
-
-const JUPITER_ORBIT_AU = 5.203;
-
-const EARTH_LONGITUDE_J2000 =
-  100.464 * DEG;
-
-const JUPITER_LONGITUDE_J2000 =
-  34.3515 * DEG;
-
-// The Solar System Scope texture is not
-// calibrated to the IAU zero meridian.
-// This offset can be adjusted later.
-const TEXTURE_LONGITUDE_OFFSET_RAD = 0;
-
-// Enable temporarily to observe one
-// Jupiter rotation in about 36 seconds.
-const DEBUG_ROTATION = false;
-const ROTATION_ACCELERATION = DEBUG_ROTATION
-  ? 1000
-  : 1;
-
-// ============================================
-// JUPITER ROTATION BY UTC
-// ============================================
-
-function getRotationY(nowMs: number): number {
-  const days = (nowMs - J2000_MS) / DAY_MS;
-
-  const longitudeDegrees =
-    (
-      (
-        ROTATION_DEG_J2000 +
-        days *
-          ROTATION_DEG_PER_DAY *
-          ROTATION_ACCELERATION
-      ) % 360 + 360
-    ) % 360;
-
-  return (
-    longitudeDegrees * DEG +
-    TEXTURE_LONGITUDE_OFFSET_RAD
-  );
-}
-
-// ============================================
-// APPROXIMATE SUN DIRECTION
-// ============================================
-
-// The isolated planet starts with its camera
-// at +Z, representing an Earth-facing view.
-//
-// Approximate circular heliocentric orbits
-// establish the Sun-Earth-Jupiter phase angle.
-// This is not a full JPL ephemeris.
-
-function setSunDirection(
-  nowMs: number,
-  out: Vector3
-): void {
-  const days = (nowMs - J2000_MS) / DAY_MS;
-
-  const earthLongitude =
-    EARTH_LONGITUDE_J2000 +
-    (days / EARTH_ORBIT_DAYS) * TAU;
-
-  const jupiterLongitude =
-    JUPITER_LONGITUDE_J2000 +
-    (days / JUPITER_ORBIT_DAYS) * TAU;
-
-  // Heliocentric positions in the orbital plane
-  const jx =
-    JUPITER_ORBIT_AU *
-    Math.cos(jupiterLongitude);
-
-  const jy =
-    JUPITER_ORBIT_AU *
-    Math.sin(jupiterLongitude);
-
-  const ex = Math.cos(earthLongitude);
-  const ey = Math.sin(earthLongitude);
-
-  // Vectors originating at Jupiter
-  const toEarthX = ex - jx;
-  const toEarthY = ey - jy;
-
-  const toSunX = -jx;
-  const toSunY = -jy;
-
-  const dot =
-    toEarthX * toSunX +
-    toEarthY * toSunY;
-
-  const cross =
-    toEarthX * toSunY -
-    toEarthY * toSunX;
-
-  const phaseAngle = Math.atan2(
-    cross,
-    dot
-  );
-
-  // +Z is the initial observer-facing direction.
-  out.set(
-    Math.sin(phaseAngle),
-    0,
-    Math.cos(phaseAngle)
-  ).normalize();
-}
-
-// ============================================
-// COMPONENT
-// ============================================
+const UPDATE_INTERVAL_MS = 60_000;
+const SUN_DISTANCE = 20;
 
 export default function JupiterEnvironment({
   active,
@@ -149,68 +35,144 @@ export default function JupiterEnvironment({
   lighting,
 }: PlanetEnvironmentProps) {
   const bodyRef = useRef<Group>(null);
+  const sunlightRef = useRef<DirectionalLight>(null);
 
-  const sunlightRef =
-    useRef<DirectionalLight>(null);
-
-  const sunDirectionRef = useRef(
-    new Vector3(0.12, 0, 1)
+  const invalidate = useThree(
+    (state) => state.invalidate
   );
 
-  // Runs before the atmosphere animation.
-  useFrame(() => {
+  // Calculate the initial astronomical state
+  // before the first rendered frame.
+  const initialState = useMemo(() => {
+    const now = new Date();
+
+    return {
+      ...getJupiterState(now),
+      timestamp: now.getTime(),
+    };
+  }, []);
+
+  const rotationSample = useRef({
+    timestamp: initialState.timestamp,
+    angle: initialState.rotationY,
+  });
+
+  // ==========================================
+  // ASTRONOMICAL UPDATES
+  // ==========================================
+
+  useEffect(() => {
     if (!active || lighting !== "scene") {
       return;
     }
 
-    const now = Date.now();
+    const update = () => {
+      const now = new Date();
+      const state = getJupiterState(now);
 
-    // Rotate the entire planet, including
-    // its moving cloud bands and vortices.
-    if (bodyRef.current) {
-      bodyRef.current.rotation.y =
-        getRotationY(now);
-    }
+      // Use the same sample timestamp for
+      // the astronomical angle and interpolation.
+      rotationSample.current.timestamp =
+        now.getTime();
 
-    // Update lighting in world coordinates.
-    // The light does not rotate with Jupiter.
-    setSunDirection(
-      now,
-      sunDirectionRef.current
+      rotationSample.current.angle =
+        state.rotationY;
+
+      // Update the real solar direction.
+      // The light stays in world coordinates.
+      if (sunlightRef.current) {
+        sunlightRef.current.position
+          .copy(state.sunDirection)
+          .multiplyScalar(SUN_DISTANCE);
+      }
+
+      if (bodyRef.current) {
+        bodyRef.current.rotation.y =
+          state.rotationY;
+      }
+
+      // Works even with demand rendering.
+      invalidate();
+    };
+
+    update();
+
+    const interval = window.setInterval(
+      update,
+      UPDATE_INTERVAL_MS
     );
 
-    if (sunlightRef.current) {
-      sunlightRef.current.position
-        .copy(sunDirectionRef.current)
-        .multiplyScalar(20);
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [active, lighting, invalidate]);
+
+  // ==========================================
+  // CONTINUOUS JUPITER ROTATION
+  // ==========================================
+
+  useFrame(() => {
+    if (
+      !active ||
+      lighting !== "scene" ||
+      !bodyRef.current
+    ) {
+      return;
     }
+
+    const now = Date.now();
+    const sample = rotationSample.current;
+
+    const elapsedMs =
+      Math.max(0, now - sample.timestamp);
+
+    // Smooth System III rotation between
+    // precise astronomical updates.
+    bodyRef.current.rotation.y =
+      sample.angle +
+      elapsedMs * JUPITER_SPIN_RAD_PER_MS;
   }, -1);
+
+  // ==========================================
+  // SCENE
+  // ==========================================
 
   return (
     <>
       {lighting === "scene" && (
         <>
-          {/* Very weak ambient illumination */}
-          <ambientLight intensity={0.09} />
+          <ambientLight
+            intensity={0.09}
+          />
 
-          {/* Sun: single directional source */}
           <directionalLight
             ref={sunlightRef}
-            position={[2, 0, 20]}
+            position={[
+              initialState.sunDirection.x *
+                SUN_DISTANCE,
+              initialState.sunDirection.y *
+                SUN_DISTANCE,
+              initialState.sunDirection.z *
+                SUN_DISTANCE,
+            ]}
             intensity={2.8}
             color="#fff9f1"
           />
         </>
       )}
 
-      {/* Approximate axial tilt */}
+      {/* No additional axial tilt:
+          it is accounted for in the
+          astronomical reference frame. */}
       <group
-        rotation={[0, 0, AXIAL_TILT_RAD]}
+        ref={bodyRef}
+        rotation={[
+          0,
+          initialState.rotationY,
+          0,
+        ]}
       >
-        {/* UTC rotation */}
-        <group ref={bodyRef}>
-          {children}
-        </group>
+        {children}
       </group>
     </>
   );

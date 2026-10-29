@@ -114,9 +114,36 @@ const planetVisuals: Record<string, PlanetVisualDefinition> = {
         "Jupiter global cloud texture based on NASA data.",
     },
   },
-  saturn: { rings: "saturn" },
-};
+  saturn: {
+    Scene: lazy(
+      () =>
+        import(
+          "@/components/planetPreview/SaturnPreview"
+        )
+    ),
 
+    PreviewScene: lazy(
+      () =>
+        import(
+          "@/components/planetPreview/SaturnPreview"
+        ).then((module) => ({
+          default: module.SaturnLite,
+        }))
+    ),
+
+    Environment: lazy(
+      () =>
+        import("./saturn/SaturnEnvironment")
+    ),
+
+    credits: {
+      href: "https://www.solarsystemscope.com/textures/",
+      label: "Saturn · Solar System Scope · CC BY 4.0",
+      description:
+        "Saturn globe and radial ring texture based on NASA imagery.",
+    },
+  },
+}
 export function getPlanetVisual(id: string): PlanetVisualDefinition {
   return planetVisuals[id] ?? {};
 }
