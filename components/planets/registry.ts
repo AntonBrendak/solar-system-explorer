@@ -143,6 +143,34 @@ const planetVisuals: Record<string, PlanetVisualDefinition> = {
         "Saturn globe and radial ring texture based on NASA imagery.",
     },
   },
+  uranus: {
+    Scene: lazy(
+      () => import("@/components/planetPreview/UranusPreview")
+    ),
+
+    PreviewScene: lazy(
+      () =>
+        import("@/components/planetPreview/UranusPreview").then(
+          (module) => ({
+            default: module.UranusLite,
+          })
+        )
+    ),
+
+    Environment: lazy(
+      () =>
+        import(
+          "@/components/planets/uranus/UranusEnvironment"
+        )
+    ),
+
+    credits: {
+      href: "https://www.solarsystemscope.com/textures/",
+      label: "Uranus · Solar System Scope · CC BY 4.0",
+      description:
+        "Uranus base texture with animated procedural atmosphere.",
+    },
+  },
 }
 export function getPlanetVisual(id: string): PlanetVisualDefinition {
   return planetVisuals[id] ?? {};
