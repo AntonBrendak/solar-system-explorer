@@ -1,3 +1,5 @@
+import { cloudCoverShader } from "./cloud-cover-shader";
+
 export const CLOUD_BASE_RADIUS = 2.002;
 export const CLOUD_TOP_RADIUS = 2.012;
 export const MAX_CLOUD_FLASHES = 4;
@@ -33,14 +35,7 @@ export const cloudVolumeFragment = /* glsl */ `
                 asin(clamp(n.y, -1.0, 1.0)) / PI + 0.5);
   }
 
-  float cloudCover(vec2 uv) {
-    vec2 drift = sin(uCloudPhase) * sin(uv.y * PI)
-      * vec2(0.002, 0.0006 * sin(uv.x * 2.0 * PI));
-    vec2 a = vec2(fract(uv.x + drift.x), clamp(uv.y + drift.y, 0.0, 1.0));
-    vec2 b = vec2(fract(uv.x - drift.x), clamp(uv.y - drift.y, 0.0, 1.0));
-    // Explicit mip sampling remains stable inside a divergent ray-march loop.
-    return mix(textureLod(uCloudTexture, a, 0.75).a, textureLod(uCloudNext, b, 0.75).a, uCloudBlend);
-  }
+  ${cloudCoverShader}
 
   // Relief follows the satellite mask. No procedural grid is added to the cloud
   // tops: low-frequency noise looked like corrugated terrain near the horizon.

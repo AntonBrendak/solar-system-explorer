@@ -42,6 +42,7 @@ type CloudFrames = {
 };
 type CloudUniforms = {
   first: { value: Texture };
+  fallback: { value: Texture };
   worldToCloud: { value: Matrix4 };
   sunLocal: { value: Vector3 };
   lightning: { value: Vector4[] };
@@ -118,13 +119,17 @@ export default function EarthClouds({
   const materialRef = useRef<ShaderMaterial>(null);
   const meshRef = useRef<Mesh>(null);
   const framesRef = useRef<CloudFrames | null>(null);
-  const cloudTexture = useLoader(TextureLoader, earthTextures.clouds);
+  const [cloudTexture, polarCloudTexture] = useLoader(TextureLoader, [
+    earthTextures.clouds,
+    earthTextures.previewClouds,
+  ]);
   const precipitationFallback = useRef(
     new DataTexture(new Uint8Array([0]), 1, 1, RedFormat),
   );
 
   const uniformsRef = useRef<CloudUniforms>({
     first: { value: cloudTexture },
+    fallback: { value: polarCloudTexture },
     worldToCloud: { value: new Matrix4() },
     sunLocal: { value: new Vector3() },
     lightning: {
@@ -145,6 +150,7 @@ export default function EarthClouds({
       }
       material.uniforms = {
         uCloudTexture: values.first,
+        uCloudFallback: values.fallback,
         uCloudNext: values.next,
         uCloudBlend: values.blend,
         uCloudPhase: values.phase,

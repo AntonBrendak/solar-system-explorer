@@ -52,4 +52,6 @@ The image spin layer stays mounted so existing GSAP targets remain valid, but it
 
 Run `node scripts/prepare-earth-runtime.mjs` after changing source maps. It creates bounded runtime assets in `public/textures/earth/runtime/`: a 4K surface/night map, 2K material maps and a cloud fallback. Original source files remain available. The cloud fallback uses `cloudsLive.png` when supplied, otherwise `earthClouds.jpg`. Live cloud refresh and disposal still belong to `EarthClouds`.
 
+The live IR-derived cloud map has a bright background at high latitudes; its [polar regions are mirrored](https://github.com/matteason/live-cloud-maps#limitations). The coverage shader shared by clouds and lightning blends to the local grayscale `previewClouds` map between 40° and 60° latitude in both hemispheres. Clouds beyond 60° are an artistic static fallback, not live weather; equatorial clouds retain the live feed and frame interpolation. Keep this coverage calculation shared so lightning follows the visible clouds.
+
 Run `npm run lint`, `npm run typecheck` and `npm run build`. Validate deferred loading, one visible model, preview/full replacement, return-to-object resource reuse, selector axis rotation, pause, reduced motion, mobile layout and fallback behavior.

@@ -5,7 +5,7 @@ import { useFrame, useLoader } from "@react-three/fiber";
 import { TextureLoader, type Group } from "three";
 import { earthTextures } from "@/data/earth-textures";
 import { getEarthRotationY } from "@/lib/earth-time";
-import type { PlanetSceneProps } from "./types";
+import type { PlanetSceneProps } from "../types";
 
 /** Geometry only: the shared stage supplies lighting, rotation and its Canvas. */
 export default function LiteEarth({ active }: PlanetSceneProps) {

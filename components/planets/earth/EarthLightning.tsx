@@ -17,6 +17,7 @@ import {
 } from "three";
 import type { CloudFrameState } from "./cloud-frame-state";
 import { CLOUD_TOP_RADIUS, MAX_CLOUD_FLASHES } from "./cloud-volume-shaders";
+import { cloudCoverShader } from "./cloud-cover-shader";
 
 /**
  * Satellite-style optical lightning. This deliberately does NOT draw visible
@@ -224,6 +225,8 @@ const FRAGMENT_SHADER = /* glsl */ `
   uniform float uCloudPhase;
   uniform vec3 uSunDirection;
 
+  ${cloudCoverShader}
+
   varying vec2 vPatchUv;
   varying vec2 vCloudUv;
   varying float vAge;
@@ -293,22 +296,9 @@ const FRAGMENT_SHADER = /* glsl */ `
     float brightCore = pow(max(0.0, shape), 2.7);
     float scattered = shape * (0.46 + 0.54 * textureNoise);
 
-    // Use the real global cloud texture to prefer existing cloud formations.
+    // Use the same coverage and UV advection as the cloud volume.
     // Keep a small floor because its timestamp differs from the lightning feed.
-    // Exactly the same two textures and UV advection as EarthClouds.
-    float latitudeMask = sin(vCloudUv.y * 3.14159265);
-    vec2 cloudDrift = sin(uCloudPhase) * latitudeMask * vec2(
-      0.002, 0.0006 * sin(vCloudUv.x * 6.2831853)
-    );
-    vec2 cloudUvA = vec2(fract(vCloudUv.x + cloudDrift.x),
-                         clamp(vCloudUv.y + cloudDrift.y, 0.0, 1.0));
-    vec2 cloudUvB = vec2(fract(vCloudUv.x - cloudDrift.x),
-                         clamp(vCloudUv.y - cloudDrift.y, 0.0, 1.0));
-    float cloudOpacity = mix(
-      texture2D(uCloudTexture, cloudUvA).a,
-      texture2D(uCloudNext, cloudUvB).a,
-      uCloudBlend
-    );
+    float cloudOpacity = cloudCover(vCloudUv);
     float cloudFactor = smoothstep(0.06, 0.65, cloudOpacity);
 
     float sun = dot(normalize(vNormalWorld), normalize(uSunDirection));
@@ -370,7 +360,10 @@ export default function EarthLightning({
   animate?: boolean;
 }) {
   // Local texture is a fallback while the current satellite images load.
-  const cloudTexture = useLoader(TextureLoader, earthTextures.clouds);
+  const [cloudTexture, polarCloudTexture] = useLoader(TextureLoader, [
+    earthTextures.clouds,
+    earthTextures.previewClouds,
+  ]);
   const meshRef = useRef<InstancedMesh>(null);
   const noaaRef = useRef<GeoPoint[]>([]);
   const euRef = useRef<ActivityData>(NO_ACTIVITY);
@@ -400,6 +393,7 @@ export default function EarthLightning({
           uTime: { value: 0 },
           uShellRadius: { value: CLOUD_GLOW_RADIUS },
           uCloudTexture: { value: cloudTexture },
+          uCloudFallback: { value: polarCloudTexture },
           uCloudNext: { value: cloudTexture },
           uCloudBlend: { value: 0 },
           uCloudPhase: { value: 0 },
@@ -412,7 +406,7 @@ export default function EarthLightning({
         side: DoubleSide,
         toneMapped: false,
       }),
-    [cloudTexture, sunDirection],
+    [cloudTexture, polarCloudTexture, sunDirection],
   );
 
   useEffect(() => {
