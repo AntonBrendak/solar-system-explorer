@@ -163,7 +163,6 @@ const planetVisuals: Record<string, PlanetVisualDefinition> = {
           "@/components/planets/uranus/UranusEnvironment"
         )
     ),
-
     credits: {
       href: "https://www.solarsystemscope.com/textures/",
       label: "Uranus · Solar System Scope · CC BY 4.0",
@@ -171,6 +170,35 @@ const planetVisuals: Record<string, PlanetVisualDefinition> = {
         "Uranus base texture with animated procedural atmosphere.",
     },
   },
+  neptune: {
+      Scene: lazy(
+        () =>
+          import(
+            "@/components/planetPreview/NeptunePreview"
+          )
+      ),
+
+      PreviewScene: lazy(
+        () =>
+          import(
+            "@/components/planetPreview/NeptunePreview"
+          ).then((module) => ({
+            default: module.NeptuneLite,
+          }))
+      ),
+
+      Environment: lazy(
+        () =>
+          import("./neptune/NeptuneEnvironment")
+      ),
+
+      credits: {
+        href: "https://www.solarsystemscope.com/textures/",
+        label: "Neptune · Solar System Scope · CC BY 4.0",
+        description:
+          "Base texture with procedurally enhanced cloud detail.",
+      },
+    },
 }
 export function getPlanetVisual(id: string): PlanetVisualDefinition {
   return planetVisuals[id] ?? {};
