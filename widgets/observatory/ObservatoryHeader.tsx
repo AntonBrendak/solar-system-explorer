@@ -1,6 +1,7 @@
-import { ArrowUpRight, Pause, Play } from "lucide-react";
+import { ArrowUpRight, Orbit, Pause, Play } from "lucide-react";
+import Link from "next/link";
 import type { Locale } from "@/i18n/config";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { IconButton } from "@/shared/ui/IconButton";
 import { LanguagePicker } from "@/features/localization";
 import styles from "./header.module.css";
@@ -38,6 +39,7 @@ export function ObservatoryHeader({
   onPause: () => void;
 }) {
   const t = useTranslations("ui");
+  const locale = useLocale();
   return (
     <header data-page-shell className={styles.header}>
       <ObservatoryLogo />
@@ -48,6 +50,20 @@ export function ObservatoryHeader({
         </a>
       </nav>
       <div className={styles.headerActions}>
+        <Link
+          href={"/solar-system?lang=" + locale}
+          prefetch={false}
+          className={styles.systemLink}
+          aria-label={t("solarMapNav")}
+          data-motion-button="system-map"
+        >
+          <span className={styles.systemOrbit} aria-hidden="true">
+            <Orbit size={17} strokeWidth={1.5} />
+          </span>
+          <span className={styles.systemText}>{t("solarMapNav")}</span>
+          <span className={styles.systemMobileText} aria-hidden="true">3D</span>
+          <ArrowUpRight className={styles.systemArrow} size={15} aria-hidden="true" />
+        </Link>
         <LanguagePicker onChange={onLocale} />
         <IconButton
           label={paused ? t("play") : t("pause")}

@@ -83,7 +83,14 @@
     "eclipticLatitude": "Latitude",
     "au": "AU",
     "modelError": "The 3D model could not load.",
-    "detailError": "More detail could not load. You can keep exploring."
+    "detailError": "More detail could not load. You can keep exploring.",
+    "solarMapNav": "Solar System 3D",
+    "solarMapBack": "Back to observatory",
+    "solarMapEyebrow": "ORBITAL / INTERPLANETARY SPACE",
+    "solarMapTitle": "THE SOLAR SYSTEM.",
+    "solarMapDescription": "One star. Eight worlds. A vast space waiting to be explored.",
+    "solarMapStage": "A star-filled view of interplanetary space",
+    "solarMapFooter": "STARFIELD / THE SPACE BETWEEN WORLDS"
   },
   "planets": {
     "mercury": {

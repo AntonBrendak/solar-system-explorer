@@ -118,3 +118,63 @@
     margin-inline: -3px;
   }
 }
+
+
+/* Distinct route action: quiet orbital glow rather than a generic CTA. */
+.systemLink {
+  position: relative;
+  isolation: isolate;
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  padding: 0 18px 0 13px;
+  border: 1px solid #83b6de66;
+  border-radius: 999px;
+  color: #ecf5ff;
+  background: linear-gradient(110deg, #172d45ee, #0b1829ee);
+  box-shadow: inset 0 1px #e1f4ff12, 0 0 22px #458ac213;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: .105em;
+  white-space: nowrap;
+  transition: border-color .25s, background .25s, box-shadow .25s;
+}
+.systemLink:hover,
+.systemLink:focus-visible {
+  border-color: #b3dcfaad;
+  background: linear-gradient(110deg, #22415ce9, #112439f2);
+  box-shadow: inset 0 1px #e1f4ff2a, 0 0 30px #67b2ea27;
+}
+.systemOrbit {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #b6ddff;
+  background: #8cbfe715;
+}
+.systemArrow { color: #a6d2f2; }
+.systemMobileText { display: none; }
+@media (max-width: 1100px) {
+  .navigation { gap: 18px; }
+  .headerActions { gap: 12px; }
+}
+@media (max-width: 950px) {
+  .navigation { display: none; }
+}
+@media (max-width: 767px) {
+  .systemLink { min-height: 42px; padding: 0 11px; gap: 5px; }
+  .systemOrbit { width: 23px; height: 23px; }
+  .systemText, .systemArrow { display: none; }
+  .systemMobileText { display: inline; font-size: 11px; letter-spacing: .06em; }
+  .headerActions { gap: 8px; }
+}
+@media (max-width: 420px) {
+  .header .logo > span:last-child { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .systemLink { transition: none; }
+}

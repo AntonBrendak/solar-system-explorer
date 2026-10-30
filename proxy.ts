@@ -10,4 +10,4 @@ export function proxy(request: NextRequest) {
   headers.set("x-orbital-locale", locale);
   return NextResponse.next({ request: { headers } });
 }
-export const config = { matcher: ["/", "/planet-lab"] };
+export const config = { matcher: ["/", "/planet-lab", "/solar-system"] };
