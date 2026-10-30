@@ -83,7 +83,12 @@
     "eclipticLatitude": "Latitude",
     "au": "AU",
     "modelError": "The 3D model could not load.",
-    "detailError": "More detail could not load. You can keep exploring."
+    "detailError": "More detail could not load. You can keep exploring.",
+    "mapEntryOpen": "OPEN",
+    "mapEntry3dMap": "3D MAP",
+    "mapEntrySubtitle": "SOLAR SYSTEM / LIVE MAP",
+    "mapEntryPreviewTitle": "3D map preview — coming soon",
+    "mapEntryPreviewLabel": "Preview of the upcoming Solar System 3D map"
   },
   "planets": {
     "mercury": {

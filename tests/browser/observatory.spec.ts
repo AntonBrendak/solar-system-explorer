@@ -103,11 +103,9 @@ test("full Mercury is the default, live position and a single renderer", async (
     );
   await page.locator("[data-card=saturn]").click();
   const dialog = page.getByRole("dialog");
-  await expect(dialog.locator("[data-detailed=true] img")).toHaveCSS(
-    "opacity",
-    "0",
-    { timeout: 45000 },
-  );
+  await expect(dialog.locator("[data-render-ready=true]")).toHaveCount(1, {
+    timeout: 45000,
+  });
   await expect(dialog.locator("canvas")).toHaveCount(1);
   await expect(dialog.locator("canvas")).toHaveAttribute(
     "data-context-session",
@@ -128,11 +126,9 @@ test("full Mercury is the default, live position and a single renderer", async (
   await page
     .locator("#collection")
     .evaluate((element) => element.scrollIntoView({ block: "start" }));
-  await expect(page.locator("[data-card=mercury] img")).toHaveCSS(
-    "opacity",
-    "0",
-    { timeout: 45000 },
-  );
+  await expect(
+    page.locator("[data-card=mercury] [data-render-ready=true]"),
+  ).toHaveCount(1, { timeout: 45000 });
   await page.screenshot({ path: "test-results/observatory-gallery.png" });
 });
 
@@ -150,11 +146,9 @@ test("mobile layout and accessible reduced-motion top-layer dialog", async ({
   await page.locator("[data-card=venus]").click();
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByRole("heading", { level: 2 })).toHaveText("Венера.");
-  await expect(dialog.locator("[data-detailed=true] img")).toHaveCSS(
-    "opacity",
-    "0",
-    { timeout: 45000 },
-  );
+  await expect(dialog.locator("[data-render-ready=true]")).toHaveCount(1, {
+    timeout: 45000,
+  });
   await expect(
     dialog.getByRole("button", { name: /Язык интерфейса/ }),
   ).toHaveCount(0);
@@ -265,8 +259,8 @@ test("all eight models can be explored without replacing the WebGL context", asy
       page.getByRole("dialog").getByRole("heading", { level: 2 }),
     ).toHaveText(`${name}.`);
     await expect(
-      page.getByRole("dialog").locator("[data-detailed=true] img"),
-    ).toHaveCSS("opacity", "0", { timeout: 20000 });
+      page.getByRole("dialog").locator("[data-render-ready=true]"),
+    ).toHaveCount(1, { timeout: 20000 });
     await expect(page.locator("canvas")).toHaveCount(1);
     if (name !== "Neptune")
       await page

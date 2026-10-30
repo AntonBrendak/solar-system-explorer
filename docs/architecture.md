@@ -28,7 +28,17 @@ Features do not import sibling features or page widgets. Compose independent fea
 
 `app/page.tsx` resolves initial URL state and localized metadata, then renders the observatory. `app/layout.tsx` owns locale, font preloads and direct global CSS imports. `proxy.ts` resolves the language query, then the cookie, then Russian.
 
-`widgets/observatory/` owns the header, hero, gallery, cards, fullscreen details and footer. Each section has a CSS Module. Shared typography and actions use `shared/ui/presentation.module.css`; design tokens, reset and the fluid page gutter live in `shared/styles/`.
+`widgets/observatory/` keeps its public `index.ts`, page composition (`Observatory.tsx`) and page styles at the root. Section components and their CSS Modules live together:
+
+| Directory | Responsibility |
+| --------- | -------------- |
+| `header/` | Logo, navigation and `SolarMapEntry` |
+| `hero/` | Main planet view and ambient backdrop |
+| `gallery/` | Planet collection and cards |
+| `details/` | Fullscreen planet dialog and characteristics |
+| `about/` | Project description and footer |
+
+Shared typography and actions use `shared/ui/presentation.module.css`; design tokens, reset and the fluid page gutter live in `shared/styles/`.
 
 ### Feature APIs
 

@@ -1,0 +1,706 @@
+
+/* =========================================
+   SOLAR MAP ENTRY
+   Lightweight CSS 3D navigation component
+   ========================================= */
+
+.entry {
+  --entry-scale: 0.37;
+
+  position: relative;
+  display: block;
+  flex: none;
+
+  width: 224px;
+  height: 82px;
+  padding: 0;
+
+  border: 0;
+  background: transparent;
+  color: #edf7ff;
+  text-align: left;
+  cursor: pointer;
+
+  perspective: 1000px;
+  isolation: isolate;
+}
+
+.entry:focus-visible {
+  outline: 2px solid #b8e5ff;
+  outline-offset: 6px;
+}
+
+/* =========================================
+   SCENE SCALE
+   ========================================= */
+
+.scale {
+  position: absolute;
+  left: 0;
+  top: 0;
+
+  width: 605px;
+  height: 222px;
+
+  transform: scale(var(--entry-scale));
+  transform-origin: top left;
+  transform-style: preserve-3d;
+
+  pointer-events: none;
+}
+
+/* =========================================
+   3D WORLD
+
+   Nearly frontal initial position.
+   Values must match SolarMapEntry.tsx.
+   ========================================= */
+
+.world {
+  --inverse-x: 8deg;
+  --inverse-y: 10deg;
+
+  position: absolute;
+  inset: 0;
+
+  transform: rotateX(-8deg) rotateY(-10deg);
+  transform-style: preserve-3d;
+}
+
+/* =========================================
+   WIREFRAME BOX — 12 EDGES
+   ========================================= */
+
+/* Front and back outlines: 8 edges */
+
+.frame {
+  position: absolute;
+  inset: 0;
+
+  border: 1.5px solid #9abbd5a6;
+  pointer-events: none;
+
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
+}
+
+.front {
+  transform: translateZ(86px);
+  border-color: #bbdbefd1;
+}
+
+.back {
+  transform: translateZ(-86px);
+  border-color: #668bab81;
+}
+
+/* Four connecting edges */
+
+.strut {
+  position: absolute;
+  left: 0;
+  top: 0;
+
+  width: 172px;
+  height: 1.5px;
+
+  transform-origin: left center;
+  transform: translateZ(86px) rotateY(90deg);
+
+  background: linear-gradient(
+    90deg,
+    #d1ecff,
+    #83accd,
+    #466989
+  );
+
+  transition: filter 0.3s;
+}
+
+.topRight {
+  left: 100%;
+}
+
+.bottomLeft {
+  top: 100%;
+}
+
+.bottomRight {
+  left: 100%;
+  top: 100%;
+}
+
+/* =========================================
+   3D EXTRUDED TEXT
+   ========================================= */
+
+.textBlock {
+  position: absolute;
+  left: 34px;
+  top: 30px;
+
+  transform: translateZ(0);
+  transform-style: preserve-3d;
+
+  transition: transform 0.5s
+    cubic-bezier(0.17, 0.85, 0.2, 1);
+}
+
+.word {
+  position: relative;
+  display: block;
+
+  height: 61px;
+
+  color: transparent;
+
+  font-family:
+    var(--font-display),
+    var(--font-body),
+    sans-serif;
+
+  font-size: 62px;
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: 0.015em;
+  white-space: nowrap;
+
+  transform-style: preserve-3d;
+}
+
+.secondWord {
+  height: 58px;
+  font-size: 54px;
+  letter-spacing: -0.02em;
+}
+
+.wordBack,
+.depthSlice,
+.wordFace {
+  position: absolute;
+  left: 0;
+  top: 0;
+
+  display: block;
+  white-space: nowrap;
+}
+
+.wordBack {
+  color: #223f5e;
+  transform: translateZ(-4px);
+}
+
+.depthSlice {
+  pointer-events: none;
+}
+
+.wordFace {
+  transform: translateZ(43px);
+
+  color: #eaf7ff;
+
+  text-shadow:
+    0 0 10px #a5d8fa3d,
+    1px 1px #d5edfc,
+    2px 2px #5482a5;
+
+  transition:
+    color 0.3s,
+    text-shadow 0.3s;
+}
+
+.secondWord .wordFace {
+  color: #9ad4fa;
+}
+
+/* Small label below the main title */
+
+.subtitle {
+  display: block;
+  position: relative;
+
+  margin-top: 4px;
+  padding-left: 3px;
+
+  transform: translateZ(35px);
+
+  color: #8db9d6;
+
+  font: 9px var(--font-mono), monospace;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+
+  transition: color 0.3s;
+}
+
+/* =========================================
+   MINIATURE SOLAR SYSTEM
+
+   Moved left and scaled down to stay
+   inside the wireframe box.
+   ========================================= */
+
+.system {
+  position: absolute;
+
+  left: 430px;
+  top: 108px;
+
+  width: 0;
+  height: 0;
+
+  transform: translateZ(8px) scale(0.86);
+  transform-origin: center;
+  transform-style: preserve-3d;
+
+  transition: transform 0.5s
+    cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* =========================================
+   SUN
+   ========================================= */
+
+.sunFacing {
+  position: absolute;
+
+  transform:
+    rotateY(var(--inverse-y))
+    rotateX(var(--inverse-x));
+
+  transform-style: preserve-3d;
+}
+
+.sunHalo {
+  position: absolute;
+  left: -40px;
+  top: -40px;
+
+  width: 80px;
+  height: 80px;
+
+  border-radius: 50%;
+
+  background: radial-gradient(
+    circle,
+    #ffce8270,
+    #ffb65c26 40%,
+    transparent 75%
+  );
+}
+
+.sun {
+  position: absolute;
+  left: -17px;
+  top: -17px;
+
+  width: 34px;
+  height: 34px;
+
+  border-radius: 50%;
+
+  background: radial-gradient(
+    circle at 28% 24%,
+    #fffef9,
+    #fff0bf 17%,
+    #ffda78 39%,
+    #e99d43 70%,
+    #7f341d
+  );
+
+  box-shadow:
+    inset -6px -5px 7px #8e421e80,
+    inset 2px 2px 4px #fff5d780,
+    0 0 12px #ffc276ad,
+    0 0 27px #ffae5275;
+}
+
+.sun::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+
+  border-radius: 50%;
+
+  background: repeating-linear-gradient(
+    140deg,
+    transparent 0 5px,
+    #b3661918 6px 7px
+  );
+}
+
+/* =========================================
+   ORBIT GEOMETRY
+   ========================================= */
+
+.orbit {
+  position: absolute;
+
+  left: calc(var(--diameter) / -2);
+  top: calc(var(--diameter) / -2);
+
+  width: var(--diameter);
+  height: var(--diameter);
+
+  border: 1.3px solid #9dcaeeaa;
+  border-radius: 50%;
+
+  transform:
+    rotateZ(var(--node))
+    rotateX(var(--incline));
+
+  transform-style: preserve-3d;
+
+  transition: border-color 0.3s;
+}
+
+/* Mercury */
+
+.mercury {
+  --diameter: 75px;
+  --node: -20deg;
+  --incline: 66deg;
+
+  --inverse-node: 20deg;
+  --inverse-incline: -66deg;
+}
+
+/* Earth */
+
+.earth {
+  --diameter: 125px;
+  --node: 16deg;
+  --incline: 63deg;
+
+  --inverse-node: -16deg;
+  --inverse-incline: -63deg;
+
+  border-color: #acdfffce;
+}
+
+/* Mars */
+
+.mars {
+  --diameter: 176px;
+  --node: -25deg;
+  --incline: 69deg;
+
+  --inverse-node: 25deg;
+  --inverse-incline: -69deg;
+
+  border-color: #83b3d8ac;
+}
+
+/* =========================================
+   ORBITAL ANIMATION STRUCTURE
+
+   GSAP rotates runner and carrier.
+   No continuous CSS animation needed.
+   ========================================= */
+
+.runner {
+  position: absolute;
+  inset: 0;
+
+  transform-style: preserve-3d;
+}
+
+.carrier {
+  position: absolute;
+  left: 50%;
+  top: 0;
+
+  transform-style: preserve-3d;
+}
+
+/* =========================================
+   PLANET BILLBOARDING
+
+   Keep each planet facing the viewer
+   when the 3D box rotates.
+   ========================================= */
+
+.billboard {
+  position: absolute;
+
+  transform:
+    rotateX(var(--inverse-incline))
+    rotateZ(var(--inverse-node))
+    rotateY(var(--inverse-y))
+    rotateX(var(--inverse-x));
+
+  transform-style: preserve-3d;
+}
+
+/* =========================================
+   PLANET MATERIALS
+   ========================================= */
+
+.sphere {
+  position: absolute;
+  left: 0;
+  top: 0;
+
+  transform: translate(-50%, -50%);
+
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.sphere::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  border-radius: 50%;
+
+  background: linear-gradient(
+    128deg,
+    transparent 26%,
+    #02071300 48%,
+    #040810a8
+  );
+}
+
+/* Mercury */
+
+.mercurySphere {
+  width: 15px;
+  height: 15px;
+
+  background: radial-gradient(
+    circle at 28% 24%,
+    #f1e9da,
+    #b9aea3 35%,
+    #777178 68%,
+    #292834
+  );
+
+  box-shadow: inset -3px -3px 4px #0008;
+}
+
+/* Earth */
+
+.earthSphere {
+  width: 27px;
+  height: 27px;
+
+  background:
+    radial-gradient(
+      ellipse at 42% 42%,
+      #9edcb4 0 11%,
+      transparent 17%
+    ),
+    radial-gradient(
+      ellipse at 66% 68%,
+      #448c86 0 13%,
+      transparent 20%
+    ),
+    radial-gradient(
+      circle at 25% 22%,
+      #efffff,
+      #85d5f5 18%,
+      #2692c5 41%,
+      #104e8d 67%,
+      #081832
+    );
+
+  box-shadow:
+    inset -5px -4px 5px #000b,
+    inset 2px 2px 3px #ffffff85,
+    0 0 10px #68baff83;
+}
+
+/* Mars */
+
+.marsSphere {
+  width: 22px;
+  height: 22px;
+
+  background:
+    radial-gradient(
+      ellipse at 42% 35%,
+      #eac09b 0 12%,
+      transparent 20%
+    ),
+    radial-gradient(
+      ellipse at 67% 64%,
+      #86433c 0 13%,
+      transparent 20%
+    ),
+    radial-gradient(
+      circle at 25% 22%,
+      #ffdfb8,
+      #d68b62 39%,
+      #9e4b38 69%,
+      #33202b
+    );
+
+  box-shadow: inset -4px -4px 5px #0009;
+}
+
+/* =========================================
+   CLICK FEEDBACK
+   ========================================= */
+
+.flash {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+
+  width: 110px;
+  height: 110px;
+  margin: -55px;
+
+  opacity: 0;
+  pointer-events: none;
+
+  border-radius: 50%;
+
+  background: radial-gradient(
+    circle,
+    #b4e6ff44,
+    transparent 70%
+  );
+}
+
+/* =========================================
+   HOVER / KEYBOARD FOCUS
+   ========================================= */
+
+.entry:hover .textBlock,
+.entry:focus-visible .textBlock {
+  transform: translateZ(21px) translateY(-4px);
+}
+
+.entry:hover .system,
+.entry:focus-visible .system {
+  transform: translateZ(20px) scale(0.93);
+}
+
+.entry:hover .front,
+.entry:focus-visible .front {
+  border-color: #dcf3ff;
+  box-shadow: 0 0 13px #66c3ff51;
+}
+
+.entry:hover .back,
+.entry:focus-visible .back {
+  border-color: #8cc8efad;
+}
+
+.entry:hover .strut,
+.entry:focus-visible .strut {
+  filter:
+    brightness(1.65)
+    drop-shadow(0 0 3px #80d5ff);
+}
+
+.entry:hover .wordFace,
+.entry:focus-visible .wordFace {
+  color: #ffffff;
+
+  text-shadow:
+    0 0 19px #9bdcff96,
+    1px 1px #fff,
+    2px 2px #75b4df;
+}
+
+.entry:hover .secondWord .wordFace,
+.entry:focus-visible .secondWord .wordFace {
+  color: #aee9ff;
+}
+
+.entry:hover .orbit,
+.entry:focus-visible .orbit {
+  border-color: #b8eaffdc;
+}
+
+.entry:hover .subtitle,
+.entry:focus-visible .subtitle {
+  color: #c5e9ff;
+}
+
+/* =========================================
+   RESPONSIVE SIZES
+   ========================================= */
+
+@media (max-width: 1099px) {
+  .entry {
+    --entry-scale: 0.34;
+
+    width: 206px;
+    height: 76px;
+  }
+}
+
+@media (max-width: 767px) {
+  .entry {
+    --entry-scale: 0.30;
+
+    width: 182px;
+    height: 67px;
+  }
+}
+
+@media (max-width: 440px) {
+  .entry {
+    --entry-scale: 0.22;
+
+    width: 133px;
+    height: 49px;
+  }
+}
+
+@media (max-width: 350px) {
+  .entry {
+    --entry-scale: 0.19;
+
+    width: 115px;
+    height: 43px;
+  }
+}
+
+/* =========================================
+   RUSSIAN LOCALIZATION
+   ========================================= */
+
+.entry[data-locale="ru"] .word {
+  font-size: 55px;
+  height: 58px;
+  letter-spacing: -0.03em;
+}
+
+.entry[data-locale="ru"] .secondWord {
+  font-size: 48px;
+  height: 58px;
+  letter-spacing: -0.035em;
+}
+
+.entry[data-locale="ru"] .subtitle {
+  font-size: 9px;
+  letter-spacing: 0.09em;
+}
+
+/* =========================================
+   REDUCED MOTION
+   ========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .entry *,
+  .entry *::before,
+  .entry *::after {
+    transition: none !important;
+  }
+}
+
+/* =========================================
+   PAUSED STATE
+   ========================================= */
+
+.entry[data-paused="true"] *,
+.entry[data-paused="true"] *::before,
+.entry[data-paused="true"] *::after {
+  transition: none;
+}

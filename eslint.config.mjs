@@ -7,7 +7,13 @@ const eslintConfig = defineConfig([
   ...nextTs,
   {
     files: ["{app,widgets,features,entities,shared,i18n}/**/*.{ts,tsx}"],
-    rules: { "no-console": "error", "no-debugger": "error" },
+    rules: {
+      "no-console": [
+        "warn",
+        { allow: ["warn", "error"] },
+      ],
+      "no-debugger": "error",
+    },
   },
   {
     files: ["shared/**/*.{ts,tsx}"],

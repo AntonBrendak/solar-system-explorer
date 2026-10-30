@@ -1,0 +1,299 @@
+
+/* =========================================
+   OBSERVATORY HEADER
+   ========================================= */
+
+.header {
+  position: relative;
+  z-index: 60;
+
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 24px;
+
+  height: 104px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* =========================================
+   BRAND
+   ========================================= */
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  flex-shrink: 0;
+
+  gap: 12px;
+
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: 0.15em;
+  white-space: nowrap;
+}
+
+.logoDot {
+  color: var(--accent);
+}
+
+.logo[data-compact="true"] {
+  font-size: 14px;
+  gap: 8px;
+}
+
+/* =========================================
+   LOGO ORBIT
+   ========================================= */
+
+.logoSymbol {
+  position: relative;
+
+  display: grid;
+  place-items: center;
+
+  width: 35px;
+  height: 35px;
+  flex-shrink: 0;
+
+  border: 1px solid #adc9e16b;
+  border-radius: 50%;
+}
+
+.logoOrbitOne,
+.logoOrbitTwo {
+  position: absolute;
+
+  width: 44px;
+  height: 15px;
+
+  border: 1px solid #bed6e9;
+  border-radius: 50%;
+
+  transform-origin: center;
+  pointer-events: none;
+}
+
+.logoOrbitOne {
+  transform: rotate(-35deg);
+}
+
+.logoOrbitTwo {
+  transform: rotate(40deg);
+  opacity: 0.45;
+}
+
+.logoCore {
+  width: 8px;
+  height: 8px;
+
+  border-radius: 50%;
+  background: #c7e6ff;
+  box-shadow: 0 0 15px #9ed3ff70;
+}
+
+.logoSatelliteTrack {
+  position: absolute;
+  inset: 0;
+
+  transform: rotate(-35deg);
+  pointer-events: none;
+}
+
+.logoSatellite {
+  position: absolute;
+
+  width: 4px;
+  height: 4px;
+
+  border-radius: 50%;
+  background: #e4f4ff;
+  box-shadow: 0 0 8px #9ed3ff;
+
+  offset-path: ellipse(
+    22px 7.5px at 17.5px 17.5px
+  );
+  offset-distance: 0%;
+}
+
+.logo[data-compact="true"] .logoSymbol {
+  scale: 0.77;
+  margin-inline: -4px;
+}
+
+/* =========================================
+   MAIN NAVIGATION
+   ========================================= */
+
+.navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+
+  gap: 35px;
+  min-width: 0;
+}
+
+.navigation a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  color: #b5bfc9;
+  font-size: 12px;
+  white-space: nowrap;
+
+  transition: color 0.2s ease;
+}
+
+.navigation a:hover,
+.navigation a:focus-visible {
+  color: #ffffff;
+}
+
+/* =========================================
+   HEADER ACTIONS
+
+   Order:
+   1. SolarMapEntry
+   2. LanguagePicker
+   3. Pause / Play
+   ========================================= */
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  justify-self: end;
+
+  gap: 16px;
+  min-width: 0;
+}
+
+/* Prevent the 3D button and controls
+   from being compressed by Flexbox. */
+.headerActions > * {
+  flex-shrink: 0;
+}
+
+/* =========================================
+   TABLET / SMALL DESKTOP
+   ========================================= */
+
+@media (max-width: 1023px) {
+  .header {
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 20px;
+  }
+
+  .navigation {
+    display: none;
+  }
+
+  .headerActions {
+    gap: 14px;
+  }
+}
+
+/* =========================================
+   MOBILE
+   ========================================= */
+
+@media (max-width: 767px) {
+  .header {
+    height: 80px;
+    column-gap: 12px;
+  }
+
+  .logo {
+    gap: 8px;
+    font-size: 17px;
+    letter-spacing: 0.11em;
+  }
+
+  .logoSymbol {
+    scale: 0.83;
+    margin-inline: -3px;
+  }
+
+  .headerActions {
+    gap: 10px;
+  }
+}
+
+/* =========================================
+   COMPACT MOBILE
+
+   Prioritize:
+   - 3D Map
+   - Language
+   - Pause
+
+   Keep the logo icon accessible.
+   ========================================= */
+
+@media (max-width: 560px) {
+  .header {
+    column-gap: 8px;
+  }
+
+  /* Hide only the decorative wordmark.
+     The orbit logo stays visible and the
+     link retains aria-label="ORBITAL". */
+  .logo > span:last-child {
+    display: none;
+  }
+
+  .logo {
+    gap: 0;
+  }
+
+  .headerActions {
+    gap: 8px;
+  }
+}
+
+/* =========================================
+   SMALL MOBILE
+   ========================================= */
+
+@media (max-width: 380px) {
+  .header {
+    column-gap: 5px;
+  }
+
+  .headerActions {
+    gap: 5px;
+  }
+
+  /* Override only the language trigger,
+     not the popover menu or its options. */
+  .headerActions button[aria-haspopup="listbox"] {
+    min-width: 72px;
+    padding-inline: 6px;
+    gap: 4px;
+  }
+}
+
+/* =========================================
+   VERY NARROW SCREENS
+   ========================================= */
+
+@media (max-width: 350px) {
+  .headerActions {
+    gap: 4px;
+  }
+}
+
+/* =========================================
+   ACCESSIBILITY
+   ========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .navigation a {
+    transition: none;
+  }
+}

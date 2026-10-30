@@ -1,7 +1,7 @@
 # ORBITAL — Digital Observatory
 
 A bilingual Solar System atlas built with Next.js, React, TypeScript, next-intl, GSAP and React Three Fiber. Eight animated planet cards open a fullscreen observatory with detailed stories, comparable characteristics and interactive 3D models. Textures progressively reach their highest supported source resolution, including genuine 8K maps, without requiring a quality selector.
-
+ open https://orbital-observatory.antonheardstone.workers.dev to see
 ## Development
 
 Use Node.js 22 or newer and npm 10. The project uses ES modules.

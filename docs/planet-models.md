@@ -16,7 +16,7 @@ For example, Earth geometry, clouds, lightning, texture metadata and solar calcu
 
 ## View and scene lifetime
 
-`PlanetCanvasProvider` owns the persistent renderer host, active viewport registration and top-layer relocation. `useSceneCache` owns Full-scene lifetime; `scene-cache.ts` defines the LRU policy. `PlanetViewport` owns visibility, poster fallback and the current DOM target.
+`PlanetCanvasProvider` owns the persistent renderer host, active viewport registration and top-layer relocation. `useSceneCache` owns Full-scene lifetime; `scene-cache.ts` defines the LRU policy. `PlanetViewport` owns visibility, error-only poster fallback and the current DOM target. Startup and offscreen viewports do not request flat planet images: the first visual is the lightweight 3D preview with small local textures, retained while Full detail prepares.
 
 Cards mount lightweight `ViewportScene` previews while visible. `SharedPlanetCanvas` retains Full views keyed by planet until eviction. Returning to a cached planet changes its target without remounting the prepared model. Camera controls reconnect to that target. Each View has its own scene, camera and lighting; root Canvas dimensions must remain equal to the browser viewport.
 
@@ -82,4 +82,4 @@ Run `node scripts/prepare-earth-runtime.mjs` after changing Earth source maps. T
 
 Add `diagnostics=1` to expose `window.__ORBITAL_RENDERER__.snapshot()`. It reports Canvas dimensions, actual Three.js texture/geometry/program counts, resident textures, estimated bytes, Full-cache entries, preparation counts by texture tier and up to 50 activation timings. It adds no product UI or console output.
 
-Browser tests save `renderer-resource-samples.json`, verify cached revisits without repeated preparation, check root Canvas dimensions and pixel placement, and compare resource counts across two complete planet cycles. The viewport also exposes `data-texture-tier`, `data-texture-target` and `data-texture-state` for staged readiness assertions. These tests detect regressions; they do not measure exact VRAM or guarantee hardware FPS.
+Browser tests save `renderer-resource-samples.json`, verify cached revisits without repeated preparation, check root Canvas dimensions and pixel placement, and compare resource counts across two complete planet cycles. The viewport also exposes `data-render-ready` after a drawn frame, plus `data-texture-tier`, `data-texture-target` and `data-texture-state` for staged readiness assertions. These tests detect regressions; they do not measure exact VRAM or guarantee hardware FPS.

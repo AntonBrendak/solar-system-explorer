@@ -78,7 +78,6 @@ export function PlanetViewport({
           key={planet.id}
           planet={planet}
           detailed={detailed}
-          priority={priority}
           paused={paused}
           resetKey={resetKey}
           onReady={onReady}
@@ -86,9 +85,9 @@ export function PlanetViewport({
           retryKey={retryKey}
           onQualityFailure={qualityFailure}
         />
-      ) : (
-        <PlanetPoster planet={planet} detailed={detailed} priority={priority} />
-      )}
+      ) : failed || !available ? (
+        <PlanetPoster planet={planet} detailed={detailed} />
+      ) : null}
       {(failed || qualityFailed) && (
         <div className={styles.recovery} role="status">
           <span>{failed ? t("modelError") : t("detailError")}</span>
@@ -104,13 +103,9 @@ export function PlanetViewport({
 function PlanetPoster({
   planet,
   detailed,
-  priority,
-  ready = false,
 }: {
   planet: PlanetRecord;
   detailed: boolean;
-  priority: boolean;
-  ready?: boolean;
 }) {
   return (
     <Image
@@ -122,18 +117,15 @@ function PlanetPoster({
           ? "(max-width: 767px) 90vw, 50vw"
           : "(max-width: 767px) 85vw, 35vw"
       }
-      priority={priority}
       className={styles.poster}
-      style={{ opacity: ready ? 0 : 1 }}
     />
   );
 }
 
-// Each viewport waits for a drawn frame, including a retargeted cached model.
+// The lightweight 3D model is the first visual; posters are reserved for failures.
 function ActiveViewport({
   planet,
   detailed,
-  priority,
   paused,
   resetKey,
   onReady,
@@ -143,7 +135,6 @@ function ActiveViewport({
 }: {
   planet: PlanetRecord;
   detailed: boolean;
-  priority: boolean;
   paused: boolean;
   resetKey: number;
   onReady?: () => void;
@@ -176,6 +167,7 @@ function ActiveViewport({
   return (
     <div
       className={styles.active}
+      data-render-ready={ready}
       data-render-quality={quality}
       data-texture-tier={detail?.tier ?? "preview"}
       data-texture-target={detail?.target}
@@ -183,12 +175,6 @@ function ActiveViewport({
         detail?.failed ? "failed" : detail?.loading ? "loading" : "settled"
       }
     >
-      <PlanetPoster
-        planet={planet}
-        detailed={detailed}
-        priority={priority}
-        ready={ready}
-      />
       {detailed ? (
         <CachedViewport
           planetId={planet.id}

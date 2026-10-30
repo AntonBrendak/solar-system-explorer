@@ -2,7 +2,7 @@ import ui from "@/shared/ui/presentation.module.css";
 import { ArrowUpRight, Globe2, Orbit, Telescope } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { MotionReveal } from "@/shared/ui/MotionReveal";
-import { ObservatoryLogo } from "./ObservatoryHeader";
+import { ObservatoryLogo } from "../header/ObservatoryHeader";
 import styles from "./about.module.css";
 
 export function ObservatoryAbout() {

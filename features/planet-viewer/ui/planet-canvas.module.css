@@ -63,8 +63,3 @@
 .viewport[data-detailed="true"] .view:active {
   cursor: grabbing;
 }
-@media (prefers-reduced-motion: reduce) {
-  .poster {
-    transition: none;
-  }
-}
