@@ -1,32 +1,73 @@
+
+import type { Metadata } from "next";
+import { getLocale } from "next-intl/server";
+
 import { Observatory } from "@/widgets/observatory";
 import { isPlanetId } from "@/entities/planet/types";
-import { getLocale } from "next-intl/server";
-import type { Metadata } from "next";
-import { pageMetadata } from "@/i18n/page-metadata";
+
+import {
+  defaultLocale,
+  locales,
+  resolveLocale,
+} from "@/i18n/config";
+
+import {
+  pageMetadata,
+  homeUrl,
+} from "@/i18n/page-metadata";
+
 import { siteOrigin } from "./_lib/site-origin";
 
+type SearchParams = Record<
+  string,
+  string | string[] | undefined
+>;
+
+type HomePageProps = {
+  searchParams: Promise<SearchParams>;
+};
+
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocale();
+  const locale = resolveLocale(await getLocale());
   const origin = await siteOrigin();
+
   const metadata = pageMetadata(locale, origin);
+
+  const languageAlternates = Object.fromEntries(
+    locales.map((language) => [
+      language,
+      homeUrl(language, origin),
+    ]),
+  );
+
   return {
     title: metadata.title,
     description: metadata.description,
+
     metadataBase: new URL(origin),
+
     alternates: {
       canonical: metadata.canonical,
+
       languages: {
-        ru: `${origin}/`,
-        en: `${origin}/?lang=en`,
-        "x-default": `${origin}/`,
+        ...languageAlternates,
+        "x-default": homeUrl(defaultLocale, origin),
       },
     },
-    icons: { icon: "/icon.svg" },
+
+    icons: {
+      icon: "/icon.svg",
+    },
+
     openGraph: {
       title: metadata.title,
       description: metadata.description,
       url: metadata.canonical,
+
       siteName: "ORBITAL",
+
+      locale: metadata.ogLocale,
+
       images: [
         {
           url: metadata.image,
@@ -35,36 +76,51 @@ export async function generateMetadata(): Promise<Metadata> {
           alt: metadata.imageAlt,
         },
       ],
+
       type: "website",
-      locale: locale === "ru" ? "ru_RU" : "en_US",
     },
+
     twitter: {
       card: "summary_large_image",
+
       title: metadata.title,
       description: metadata.description,
-      images: [{ url: metadata.image, alt: metadata.imageAlt }],
+
+      images: [
+        {
+          url: metadata.image,
+          alt: metadata.imageAlt,
+        },
+      ],
     },
   };
 }
 
 export default async function HomePage({
   searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
+}: HomePageProps) {
   const params = await searchParams;
-  const locale =
-    params.lang === "en"
-      ? "en"
-      : params.lang === "ru"
-        ? "ru"
-        : await getLocale();
+
+  const locale = resolveLocale(
+    params.lang ?? (await getLocale()),
+  );
+
+  const origin = await siteOrigin();
+
   return (
     <Observatory
       initialLocale={locale}
-      siteOrigin={await siteOrigin()}
-      initialPlanet={isPlanetId(params.planet) ? params.planet : null}
-      initialFocus={isPlanetId(params.focus) ? params.focus : "mercury"}
+      siteOrigin={origin}
+      initialPlanet={
+        isPlanetId(params.planet)
+          ? params.planet
+          : null
+      }
+      initialFocus={
+        isPlanetId(params.focus)
+          ? params.focus
+          : "mercury"
+      }
     />
   );
 }
