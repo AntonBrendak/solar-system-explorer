@@ -15,7 +15,7 @@ test("catalog, filters, locale, animated details and browser history", async ({
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
+  await page.goto("/?lang=ru");
   await expect(page.locator("h1")).toContainText("Реальные миры");
   await expect(page.locator("[data-card]")).toHaveCount(8);
   await page.getByRole("button", { name: "Газовые", exact: true }).click();
@@ -62,7 +62,8 @@ test("full Mercury is the default, live position and a single renderer", async (
   page,
 }) => {
   test.setTimeout(90000);
-  await page.goto("/?lang=en");
+  await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
   const hero = page.locator("[data-hero-planet=mercury]");
   await expect(hero).toBeVisible();
   await expect(page.locator("canvas")).toHaveCount(1);

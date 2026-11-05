@@ -11,12 +11,14 @@ import styles from "./header.module.css";
 
 export function ObservatoryLogo({
   compact = false,
+  href = "#home",
 }: {
   compact?: boolean;
+  href?: string;
 }) {
   return (
     <a
-      href="#home"
+      href={href}
       className={styles.logo}
       data-compact={compact}
       aria-label="ORBITAL"

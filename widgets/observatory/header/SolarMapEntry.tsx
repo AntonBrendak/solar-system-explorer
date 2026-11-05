@@ -1,11 +1,12 @@
 
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import styles from "./solar-map-entry.module.css";
 
-// Decorative periods, not real astronomical data.
+// Decorative animation, not astronomical positions.
 const ORBITS = [
   { id: "mercury", initialAngle: 35, duration: 6 },
   { id: "earth", initialAngle: 145, duration: 10 },
@@ -60,23 +61,25 @@ function ExtrudedWord({
   );
 }
 
-// Preview only. Navigation will be enabled when the route exists.
-export function SolarMapEntry({ paused }: { paused: boolean }) {
+export function SolarMapEntry({
+  paused,
+}: {
+  paused: boolean;
+}) {
   const t = useTranslations("ui");
   const locale = useLocale();
 
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const linkRef = useRef<HTMLAnchorElement>(null);
   const pausedRef = useRef(paused);
   const syncMotionRef = useRef<(() => void) | null>(null);
 
-  // Keep current pause state without recreating GSAP listeners.
   useEffect(() => {
     pausedRef.current = paused;
     syncMotionRef.current?.();
   }, [paused]);
 
   useEffect(() => {
-    const button = buttonRef.current;
+    const button = linkRef.current;
     if (!button) return;
 
     let disposed = false;
@@ -84,7 +87,6 @@ export function SolarMapEntry({ paused }: { paused: boolean }) {
 
     void import("gsap")
       .then(({ default: gsap }) => {
-        // Guard against unmounting during the dynamic import.
         if (disposed) return;
 
         const world = button.querySelector<HTMLElement>(
@@ -129,7 +131,6 @@ export function SolarMapEntry({ paused }: { paused: boolean }) {
         let hovered = button.matches(":hover");
         let focused = button.matches(":focus-visible");
 
-        // Update the box and inverse planet orientation together.
         const renderPose = () => {
           world.style.transform =
             `rotateX(${pose.x}deg) rotateY(${pose.y}deg)`;
@@ -147,8 +148,6 @@ export function SolarMapEntry({ paused }: { paused: boolean }) {
 
         renderPose();
 
-        // quickTo reuses its animation instead of creating a
-        // new tween for every pointer movement.
         const xTo = gsap.quickTo(pose, "x", {
           duration: 0.5,
           ease: "power3.out",
@@ -161,7 +160,6 @@ export function SolarMapEntry({ paused }: { paused: boolean }) {
           onUpdate: renderPose,
         });
 
-        // Each orbit has synchronized forward and reverse rotations.
         const orbitTimelines = ORBITS.map((orbit, index) => {
           const runner = runners[index];
           const carrier = carriers[index];
@@ -205,11 +203,9 @@ export function SolarMapEntry({ paused }: { paused: boolean }) {
           document.hidden ||
           !inViewport;
 
-        // Shared control for pause, viewport visibility and hover speed.
         const syncMotion = () => {
           const stop = shouldStop();
 
-          // Cancel speed changes without destroying orbital progress.
           gsap.killTweensOf(orbitTimelines);
 
           if (stop) {
@@ -235,7 +231,6 @@ export function SolarMapEntry({ paused }: { paused: boolean }) {
 
         syncMotionRef.current = syncMotion;
 
-        // Stop continuous motion when the button is outside the viewport.
         const observer = new IntersectionObserver(
           ([entry]) => {
             inViewport = entry?.isIntersecting ?? false;
@@ -286,7 +281,6 @@ export function SolarMapEntry({ paused }: { paused: boolean }) {
         };
 
         const onFocus = () => {
-          // Mouse focus should not behave like keyboard focus.
           focused = button.matches(":focus-visible");
           syncMotion();
         };
@@ -341,7 +335,7 @@ export function SolarMapEntry({ paused }: { paused: boolean }) {
           yTo(DEFAULT_Y + nx * 15);
         };
 
-        // Click feedback while the destination route is not ready.
+        // Visual feedback; navigation is handled by Next.js Link.
         const onClick = () => {
           if (shouldStop()) return;
 
@@ -380,7 +374,6 @@ export function SolarMapEntry({ paused }: { paused: boolean }) {
         button.addEventListener("blur", onBlur);
         button.addEventListener("click", onClick);
 
-        // Complete cleanup for React Strict Mode and unmounts.
         cleanup = () => {
           observer.disconnect();
 
@@ -423,13 +416,8 @@ export function SolarMapEntry({ paused }: { paused: boolean }) {
           syncMotionRef.current = null;
         };
       })
-      .catch((error: unknown) => {
-        if (!disposed) {
-          console.error(
-            "Failed to initialize SolarMapEntry animation",
-            error,
-          );
-        }
+      .catch(() => {
+        // Keep the static 3D button usable if GSAP fails.
       });
 
     return () => {
@@ -439,22 +427,21 @@ export function SolarMapEntry({ paused }: { paused: boolean }) {
   }, []);
 
   return (
-    <button
-      ref={buttonRef}
+    <Link
+      ref={linkRef}
+      href={`/solar-system?lang=${encodeURIComponent(locale)}`}
+      prefetch={false}
       className={styles.entry}
-      type="button"
       data-paused={paused}
       data-locale={locale}
-      title={t("mapEntryPreviewTitle")}
-      aria-label={t("mapEntryPreviewLabel")}
+      title={t("mapEntry3dMap")}
+      aria-label={`${t("mapEntryOpen")} ${t("mapEntry3dMap")}`}
     >
       <span className={styles.scale} aria-hidden="true">
         <span className={styles.world} data-map-world>
-          {/* 8 front/back edges */}
           <span className={`${styles.frame} ${styles.front}`} />
           <span className={`${styles.frame} ${styles.back}`} />
 
-          {/* 4 depth edges */}
           <span className={styles.strut} />
           <span
             className={`${styles.strut} ${styles.topRight}`}
@@ -466,7 +453,6 @@ export function SolarMapEntry({ paused }: { paused: boolean }) {
             className={`${styles.strut} ${styles.bottomRight}`}
           />
 
-          {/* Localized, extruded text */}
           <span className={styles.textBlock}>
             <ExtrudedWord text={t("mapEntryOpen")} />
 
@@ -480,7 +466,6 @@ export function SolarMapEntry({ paused }: { paused: boolean }) {
             </span>
           </span>
 
-          {/* Miniature Solar System */}
           <span className={styles.system}>
             <span className={styles.sunFacing}>
               <span className={styles.sunHalo} />
@@ -520,6 +505,6 @@ export function SolarMapEntry({ paused }: { paused: boolean }) {
           />
         </span>
       </span>
-    </button>
+    </Link>
   );
 }

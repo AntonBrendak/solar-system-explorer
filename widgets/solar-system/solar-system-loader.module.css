@@ -1,0 +1,446 @@
+
+.root {
+  --loader-text: #f5f3f1;
+  --loader-muted: #99a7b4;
+  --loader-accent: #f3ad77;
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+
+  width: 100%;
+  min-height: 520px;
+  height: 100svh;
+  height: 100dvh;
+
+  background:
+    radial-gradient(
+      ellipse 42% 32% at 50% 40%,
+      #da865519,
+      transparent
+    ),
+    radial-gradient(
+      ellipse 36% 50% at 70% 27%,
+      #4777b016,
+      transparent
+    ),
+    linear-gradient(
+      180deg,
+      #09111a,
+      #060a11 70%,
+      #090e18
+    );
+
+  color: var(--loader-text);
+  font-family: var(--font-body), Arial, sans-serif;
+
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Header */
+
+.header {
+  position: absolute;
+  z-index: 3;
+
+  top: 30px;
+  left: 5%;
+  right: 5%;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.logo {
+  font-size: 21px;
+  font-weight: 750;
+  letter-spacing: 0.18em;
+  line-height: 1;
+}
+
+.logoDot {
+  color: var(--loader-accent);
+}
+
+.headerLabel {
+  color: #8d9dab;
+  font-size: 10px;
+  font-weight: 450;
+  letter-spacing: 0.13em;
+}
+
+/* Interactive solar-system miniature */
+
+.stage {
+  position: absolute;
+
+  top: 76px;
+  right: 0;
+  bottom: 178px;
+  left: 0;
+
+  cursor: grab;
+  touch-action: none;
+  outline: none;
+}
+
+.stage:active {
+  cursor: grabbing;
+}
+
+.stage:focus-visible {
+  outline: 1px solid #6c9eb7;
+  outline-offset: -4px;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Planet tooltip */
+
+.planetName {
+  position: absolute;
+  z-index: 4;
+
+  display: none;
+  padding: 7px 12px;
+
+  border: 1px solid #bad4dc48;
+  border-radius: 6px;
+
+  background: #102130e8;
+  box-shadow: 0 8px 25px #0008;
+
+  color: #eff6f8;
+  font-size: 12px;
+  font-weight: 500;
+
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Interaction hint */
+
+.dragHint {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  transform: translateX(-50%);
+
+  color: #8299aa;
+  font-size: 11px;
+  white-space: nowrap;
+  pointer-events: none;
+
+  transition: opacity 0.4s;
+}
+
+.dragHint svg {
+  color: #a3b8c3;
+}
+
+/* Loading progress */
+
+.bottom {
+  position: absolute;
+  z-index: 5;
+
+  left: 50%;
+  bottom: 38px;
+
+  width: min(525px, 83%);
+  transform: translateX(-50%);
+}
+
+.headline {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+
+  margin-bottom: 22px;
+}
+
+.title {
+  margin: 0;
+
+  font-size: clamp(25px, 3.8vw, 37px);
+  font-weight: 430;
+  line-height: 1.15;
+  letter-spacing: -0.055em;
+}
+
+.titleDot {
+  color: var(--loader-accent);
+}
+
+.percent {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+
+  font-size: 43px;
+  font-weight: 300;
+  line-height: 0.93;
+  letter-spacing: -0.055em;
+
+  font-variant-numeric: tabular-nums;
+}
+
+.percent small {
+  color: #e3a67c;
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+/* Progress bar */
+
+.progressTrack {
+  position: relative;
+
+  height: 3px;
+
+  border-radius: 10px;
+  background: #889da42b;
+}
+
+.progressFill {
+  width: var(--progress, 0%);
+  height: 100%;
+
+  border-radius: 10px;
+
+  background: linear-gradient(
+    90deg,
+    #b96e43,
+    #fbb279 65%,
+    #ffe0b5
+  );
+
+  box-shadow: 0 0 12px #f9a46875;
+
+  transition: width 0.18s ease-out;
+}
+
+.progressDot {
+  position: absolute;
+
+  top: 50%;
+  left: var(--progress, 0%);
+
+  width: 6px;
+  height: 6px;
+
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+
+  background: #fff0c9;
+  box-shadow: 0 0 9px 3px #e9a16a88;
+
+  transition: left 0.18s ease-out;
+}
+
+/* Humorous loading messages */
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  min-height: 32px;
+  margin-top: 13px;
+}
+
+.status {
+  color: #9eafbc;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+}
+
+.statusOut {
+  opacity: 0;
+  transform: translateY(5px);
+}
+
+.repeat {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+
+  padding: 5px 0;
+
+  border: none;
+  background: transparent;
+
+  color: #93a9b7;
+  font-size: 11px;
+
+  cursor: pointer;
+}
+
+.repeat:hover {
+  color: #ffc391;
+}
+
+.repeat:focus-visible {
+  outline: 1px solid #b2c8d6;
+  outline-offset: 3px;
+}
+
+/* Accessibility */
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Mobile */
+
+@media (max-width: 580px) {
+  .header {
+    top: 23px;
+  }
+
+  .logo {
+    font-size: 17px;
+    letter-spacing: 0.15em;
+  }
+
+  .headerLabel {
+    font-size: 8px;
+  }
+
+  .stage {
+    top: 65px;
+    bottom: 156px;
+  }
+
+  .bottom {
+    bottom: 36px;
+    width: 86%;
+  }
+
+  .title {
+    font-size: 27px;
+  }
+
+  .percent {
+    font-size: 36px;
+  }
+
+  .headline {
+    margin-bottom: 20px;
+  }
+
+  .status {
+    font-size: 11px;
+  }
+
+  .repeat {
+    font-size: 10px;
+  }
+
+  .dragHint {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 350px) {
+  .headerLabel {
+    font-size: 7px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .bottom {
+    width: 88%;
+  }
+}
+
+/* Reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .status,
+  .dragHint,
+  .progressFill,
+  .progressDot {
+    transition: none;
+  }
+}
+.progressTrack[data-indeterminate="true"] {
+  overflow: hidden;
+}
+
+.progressTrack[data-indeterminate="true"] .progressFill {
+  width: 32%;
+  animation: loaderSweep 2.3s ease-in-out infinite;
+}
+
+@keyframes loaderSweep {
+  from {
+    transform: translateX(-110%);
+  }
+
+  to {
+    transform: translateX(330%);
+  }
+}
+
+/* New loading phrase */
+
+.status {
+  animation: loaderPhraseIn 0.35s ease-out both;
+}
+
+@keyframes loaderPhraseIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progressTrack[data-indeterminate="true"] .progressFill,
+  .status {
+    animation: none;
+  }
+
+  .progressTrack[data-indeterminate="true"] .progressFill {
+    width: 100%;
+    opacity: 0.3;
+  }
+}

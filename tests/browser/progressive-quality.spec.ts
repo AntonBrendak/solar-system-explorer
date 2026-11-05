@@ -171,6 +171,10 @@ test("locale changes update metadata and published share assets remain available
 }) => {
   await page.goto("/?lang=ru");
   await expect(page).toHaveTitle("ORBITAL — Интерактивная обсерватория");
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    "href",
+    /\/\?lang=ru$/,
+  );
   await page.getByRole("button", { name: "Язык интерфейса" }).click();
   await page.getByRole("option", { name: /English/ }).click();
   await expect(page).toHaveTitle("ORBITAL — Digital Observatory");
@@ -184,7 +188,7 @@ test("locale changes update metadata and published share assets remain available
   );
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
     "href",
-    /\/\?lang=en$/,
+    /\/$/,
   );
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     "content",
