@@ -8,7 +8,7 @@ export function useAmbientMotion(
   rootRef: RefObject<HTMLDivElement | null>,
   paused: boolean,
 ) {
-  const timelineRef = useRef<gsap.core.Timeline | null>(null);
+  const timelineRef = useRef<ReturnType<typeof gsap.timeline> | null>(null);
   const pausedRef = useRef(paused);
   useEffect(() => {
     let cancelled = false;

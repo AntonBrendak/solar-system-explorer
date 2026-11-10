@@ -9,10 +9,11 @@ import {
   useState,
 } from "react";
 
-import { useThree } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { Vector3, type DirectionalLight } from "three";
 
 import type { PlanetEnvironmentProps } from "../../model/types";
+import { usePlanetMotion } from "../../model/planet-motion";
 import { getMarsState } from "./mars-state";
 
 type MarsContextValue = {
@@ -35,7 +36,9 @@ export function useMarsState() {
 export default function MarsEnvironment({
   active,
   children,
+  sunDirection: mapSunDirection,
 }: PlanetEnvironmentProps) {
+  const motion = usePlanetMotion();
   const lightRef = useRef<DirectionalLight>(null);
   const invalidate = useThree((state) => state.invalidate);
 
@@ -44,12 +47,12 @@ export default function MarsEnvironment({
   const [rotationY, setRotationY] = useState(0);
 
   useEffect(() => {
-    if (!active) return;
+    if (!active || motion) return;
 
     const update = () => {
       const next = getMarsState(new Date());
 
-      sunDirection.copy(next.sunDirection);
+      sunDirection.copy(mapSunDirection ?? next.sunDirection);
       setRotationY(next.rotationY);
 
       if (lightRef.current) {
@@ -66,10 +69,16 @@ export default function MarsEnvironment({
     return () => {
       window.clearInterval(interval);
     };
-  }, [active, invalidate, sunDirection]);
+  }, [active, invalidate, sunDirection, mapSunDirection, motion]);
+
+  useFrame(() => {
+    if (motion && mapSunDirection) sunDirection.copy(mapSunDirection);
+  }, -1);
 
   return (
-    <MarsStateContext.Provider value={{ sunDirection, rotationY }}>
+    <MarsStateContext.Provider
+      value={{ sunDirection, rotationY: motion ? 0 : rotationY }}
+    >
       <ambientLight intensity={0.03} />
 
       <directionalLight

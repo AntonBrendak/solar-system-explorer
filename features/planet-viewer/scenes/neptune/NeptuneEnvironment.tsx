@@ -7,6 +7,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { type DirectionalLight, type Group, Vector3 } from "three";
 
 import type { PlanetEnvironmentProps } from "../../model/types";
+import { usePlanetMotion } from "../../model/planet-motion";
 
 import { getNeptuneState, NEPTUNE_SPIN_RAD_PER_MS } from "./neptune-state";
 
@@ -30,7 +31,9 @@ export default function NeptuneEnvironment({
   animate,
   lighting,
   children,
+  sunDirection: mapSunDirection,
 }: PlanetEnvironmentProps) {
+  const motion = usePlanetMotion();
   const orientationRef = useRef<Group>(null);
   const spinRef = useRef<Group>(null);
   const sunlightRef = useRef<DirectionalLight>(null);
@@ -54,7 +57,7 @@ export default function NeptuneEnvironment({
   });
 
   useEffect(() => {
-    if (!active) return;
+    if (!active || motion) return;
 
     const update = () => {
       const now = new Date();
@@ -85,9 +88,13 @@ export default function NeptuneEnvironment({
     const interval = window.setInterval(update, UPDATE_INTERVAL);
 
     return () => window.clearInterval(interval);
-  }, [active, invalidate, sunDirection]);
+  }, [active, invalidate, sunDirection, motion]);
 
   useFrame(() => {
+    if (motion) {
+      if (mapSunDirection) sunDirection.copy(mapSunDirection);
+      return;
+    }
     if (!active || !animate || !spinRef.current) {
       return;
     }
@@ -118,8 +125,11 @@ export default function NeptuneEnvironment({
         </>
       )}
 
-      <group ref={orientationRef} quaternion={initial.orientation}>
-        <group ref={spinRef} rotation={[0, initial.rotationY, 0]}>
+      <group
+        ref={orientationRef}
+        quaternion={motion ? [0, 0, 0, 1] : initial.orientation}
+      >
+        <group ref={spinRef} rotation={[0, motion ? 0 : initial.rotationY, 0]}>
           {children}
         </group>
       </group>

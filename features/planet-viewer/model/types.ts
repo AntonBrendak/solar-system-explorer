@@ -1,4 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
+import type { Vector3 } from "three";
 
 /** Scenes supply Three objects only; the shared renderer owns the persistent Canvas. */
 export type PlanetSceneProps = {
@@ -9,6 +10,8 @@ export type PlanetSceneProps = {
 export type PlanetEnvironmentProps = PlanetSceneProps & {
   children: ReactNode;
   lighting: "scene" | "studio";
+  /** Optional solar direction in the containing map's world coordinates. */
+  sunDirection?: Vector3;
 };
 
 export type PlanetVisualDefinition = {

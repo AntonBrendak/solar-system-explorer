@@ -1,15 +1,17 @@
-
-import { NextIntlClientProvider } from "next-intl";
+import { getLocale } from "next-intl/server";
 import type { ReactNode } from "react";
+import { resolveLocale } from "@/i18n/config";
+import { SolarSystemIntlProvider } from "@/i18n/SolarSystemIntlProvider";
 
-export default function SolarSystemLayout({
+export default async function SolarSystemLayout({
   children,
 }: {
   children: ReactNode;
 }) {
+  const locale = resolveLocale(await getLocale());
   return (
-    <NextIntlClientProvider>
+    <SolarSystemIntlProvider locale={locale}>
       {children}
-    </NextIntlClientProvider>
+    </SolarSystemIntlProvider>
   );
 }

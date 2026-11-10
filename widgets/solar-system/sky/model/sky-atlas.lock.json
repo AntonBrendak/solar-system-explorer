@@ -1,0 +1,12 @@
+{
+  "archive": {
+    "bytes": 906673049,
+    "sha256": "75ed5cf3dfccda5e8eeff9f1ad15c05d21514aa1ef63b5ced270db7eeddce214"
+  },
+  "manifestSha256": "9b63ac9fb41a1aa65b8716b75cd31c10de9115817b68f03e42eddcea3e5a19cf",
+  "revision": "fafbe0927e770783d1e9ff33a91211beb21515ff1ed2d34f6b0ff2eb2199951e",
+  "root": "/textures/space/revisions/v2/fafbe0927e770783d1e9ff33a91211beb21515ff1ed2d34f6b0ff2eb2199951e",
+  "schema": 2,
+  "stellarRegistration": "measured",
+  "stellarRegistrationReportSha256": "b64264baa11f61fcc4d7f30d3c5340b422cba60b96cf145e5754562dee34d391"
+}

@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   description:
     "An immersive journey through the eight planets of our Solar System. Discover extraordinary worlds, one orbit at a time.",
   keywords: ["solar system", "planets", "space", "astronomy", "explorer"],
+  icons: { icon: "/icon.svg" },
 };
 
 export default async function RootLayout({

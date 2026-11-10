@@ -7,6 +7,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { Group, Vector3, type DirectionalLight } from "three";
 
 import type { PlanetEnvironmentProps } from "../../model/types";
+import { usePlanetMotion } from "../../model/planet-motion";
 
 import {
   getUranusState,
@@ -34,7 +35,9 @@ export default function UranusEnvironment({
   animate,
   children,
   lighting,
+  sunDirection,
 }: PlanetEnvironmentProps) {
+  const motion = usePlanetMotion();
   const spinRef = useRef<Group>(null);
   const sunlightRef = useRef<DirectionalLight>(null);
 
@@ -63,7 +66,7 @@ export default function UranusEnvironment({
   });
 
   useEffect(() => {
-    if (!active) return;
+    if (!active || motion) return;
 
     const update = () => {
       const now = new Date();
@@ -73,10 +76,12 @@ export default function UranusEnvironment({
 
       rotationSample.current.angle = state.rotationY;
 
-      sharedWorldSunDirection
-        .copy(state.sunDirection)
-        .applyEuler(URANUS_VIEW_ROTATION)
-        .normalize();
+      if (sunDirection) sharedWorldSunDirection.copy(sunDirection);
+      else
+        sharedWorldSunDirection
+          .copy(state.sunDirection)
+          .applyEuler(URANUS_VIEW_ROTATION)
+          .normalize();
 
       if (sunlightRef.current) {
         sunlightRef.current.position
@@ -94,9 +99,13 @@ export default function UranusEnvironment({
     return () => {
       window.clearInterval(interval);
     };
-  }, [active, invalidate, sharedWorldSunDirection]);
+  }, [active, invalidate, sharedWorldSunDirection, sunDirection, motion]);
 
   useFrame(() => {
+    if (motion) {
+      if (sunDirection) sharedWorldSunDirection.copy(sunDirection);
+      return;
+    }
     if (!active || !animate || !spinRef.current) {
       return;
     }
@@ -129,13 +138,20 @@ export default function UranusEnvironment({
       )}
 
       <group
-        rotation={[
-          URANUS_VIEW_ROTATION.x,
-          URANUS_VIEW_ROTATION.y,
-          URANUS_VIEW_ROTATION.z,
-        ]}
+        rotation={
+          motion
+            ? [0, 0, 0]
+            : [
+                URANUS_VIEW_ROTATION.x,
+                URANUS_VIEW_ROTATION.y,
+                URANUS_VIEW_ROTATION.z,
+              ]
+        }
       >
-        <group ref={spinRef} rotation={[0, initialState.rotationY, 0]}>
+        <group
+          ref={spinRef}
+          rotation={[0, motion ? 0 : initialState.rotationY, 0]}
+        >
           {children}
         </group>
       </group>

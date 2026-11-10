@@ -1,0 +1,44 @@
+.root {
+  position: relative;
+  width: 100%;
+}
+.canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  clip-path: inset(100% 0 0 0);
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 12px;
+}
+.canvas canvas {
+  pointer-events: none;
+}
+.view {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.placeholder {
+  position: absolute;
+  inset: 12px 19px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 25%,
+    var(--object-accent, var(--accent)),
+    #101722 80%
+  );
+  opacity: 0.7;
+}
+
+.error {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  color: var(--muted);
+  background: #0b111ade;
+  font-size: 11px;
+}

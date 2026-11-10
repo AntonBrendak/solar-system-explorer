@@ -3,7 +3,12 @@
 import { Component, type ReactNode } from "react";
 
 export class ErrorBoundary extends Component<
-  { children: ReactNode; onError: () => void; resetKey?: number },
+  {
+    children: ReactNode;
+    onError: () => void;
+    resetKey?: number;
+    fallback?: ReactNode;
+  },
   { failed: boolean }
 > {
   state = { failed: false };
@@ -18,6 +23,8 @@ export class ErrorBoundary extends Component<
       this.setState({ failed: false });
   }
   render() {
-    return this.state.failed ? null : this.props.children;
+    return this.state.failed
+      ? (this.props.fallback ?? null)
+      : this.props.children;
   }
 }

@@ -30,13 +30,13 @@ Features do not import sibling features or page widgets. Compose independent fea
 
 `widgets/observatory/` keeps its public `index.ts`, page composition (`Observatory.tsx`) and page styles at the root. Section components and their CSS Modules live together:
 
-| Directory | Responsibility |
-| --------- | -------------- |
-| `header/` | Logo, navigation and `SolarMapEntry` |
-| `hero/` | Main planet view and ambient backdrop |
-| `gallery/` | Planet collection and cards |
+| Directory  | Responsibility                               |
+| ---------- | -------------------------------------------- |
+| `header/`  | Logo, navigation and `SolarMapEntry`         |
+| `hero/`    | Main planet view and ambient backdrop        |
+| `gallery/` | Planet collection and cards                  |
 | `details/` | Fullscreen planet dialog and characteristics |
-| `about/` | Project description and footer |
+| `about/`   | Project description and footer               |
 
 Shared typography and actions use `shared/ui/presentation.module.css`; design tokens, reset and the fluid page gutter live in `shared/styles/`.
 
@@ -60,7 +60,20 @@ Use public entry points from widgets. Do not import a feature's `model/`, `ui/` 
 - `model/`: Cache policy and state, resource accounting, texture ownership and scene contracts. It does not import UI or planet scenes.
 - `scenes/`: Lazy registration and one folder per planet, including Full/Lite geometry, environments, shaders and orientation calculations.
 
-One Canvas persists across the page and native dialog. Full scene lifetime belongs to `useSceneCache`, independently of viewport mounts. Views follow the current DOM target. Update the View portal's local store when its size changes; its inherited `setSize` function would resize the entire Canvas. See [renderer contracts](planet-models.md).
+The observatory keeps one Canvas across the page and native dialog. Full scene lifetime belongs to `useSceneCache`, independently of viewport mounts. Views follow the current DOM target. Update the View portal's local store when its size changes; its inherited `setSize` function would resize the entire Canvas. See [renderer contracts](planet-models.md).
+
+### Solar System map
+
+`widgets/solar-system/` owns the orbital map, camera, simulation clock,
+navigation, markers and performance panel. Its main scene and demand-rendered
+navigation previews use separate Canvas contexts with one shared resource
+coordinator. Model presentation selects exactly one prepared layer per planet.
+
+Sky remains local to the map widget. It uses one sphere, spatial LOD groups,
+bounded worker requests, fenced uploads and a permanent fallback base. Its
+main allocation waits for initial model/preview leases and preserves room for
+Full-model transitions. See [Sky v2](sky.md) for its runtime and immutable
+release contracts, and [validation](validation.md) for measured evidence.
 
 ### Server weather
 
@@ -85,14 +98,6 @@ RU/EN catalogs have identical typed keys, ICU messages and locale-aware numbers.
 GSAP is imported only by browser effects, avoiding module-level timers in the Workers runtime. Its lifetime and interaction delegation live in `features/motion/model/`. Stable `data-motion-*` selectors decouple timelines from CSS Module names. Ambient motion pauses for user preference, hidden tabs and open dialogs; reduced motion removes animated decoration. These animations do not transform the WebGL model or View.
 
 Frame state stays in refs; React state describes interaction and loading transitions. Reuse `AnimatedTabs`, `IconButton`, `MotionReveal`, `MetricCard` and `ErrorBoundary` instead of duplicating behavior.
-
-## Working conventions
-
-- Write documentation, code comments, error messages and CLI output in English. Product copy belongs in the bilingual catalogs; language names retain their native spelling.
-- Keep comments for coordinate conventions, resource ownership and non-obvious constraints. Remove decorative banners and descriptions that merely repeat the code.
-- Agree on public props and module ownership before parallel work. UI, scientific catalog, individual planet scenes and weather processing can be changed independently.
-- Add a feature public export only when another module needs it. Do not flatten shader helpers or cache internals into a global utility collection.
-- Keep generated assets and attribution together. Temporary reports, screenshots, downloaded weather data and traces remain outside tracked source files.
 
 ## Validation
 

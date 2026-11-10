@@ -9,9 +9,9 @@ Downloads official celestial-coordinate (not *_gal) NASA EXR images for
 
 Each high-resolution tile has a 2048x2048 data area and a 2-pixel gutter on
 all sides. The eventual Three.js renderer MUST crop that gutter in UV space.
-Source EXRs are stored outside the Next.js project by default on Windows.
+Source EXRs are stored in the ignored .nasa-star-atlas directory by default.
 
-Setup (once, using the virtual environment already created for this task):
+Setup (Windows virtual environment):
   .\\.venv-atlas\\Scripts\\python.exe -m pip install requests OpenImageIO numpy Pillow
 
 Run all levels in order (single command):
@@ -20,8 +20,8 @@ Run all levels in order (single command):
 Try just one tile before the multi-GB download:
   .\\.venv-atlas\\Scripts\\python.exe scripts/prepare_star_atlas.py --only 16 --limit 1
 
-The script keeps complete downloads and completed images on error/restart;
-it never disables TLS certificate verification, and never fakes progress.
+Completed downloads and images are reused after an interrupted run. This
+imports canonical sources; use npm run prepare:sky for the runtime revision.
 """
 
 from __future__ import annotations
@@ -362,8 +362,8 @@ def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
         "--source-dir", type=Path,
-        default=Path("C:/NASA") if os.name == "nt" else Path(".nasa-star-atlas"),
-        help="Folder for original NASA EXRs (default on Windows: C:\\NASA)",
+        default=Path(".nasa-star-atlas"),
+        help="Folder for original NASA EXRs (default: .nasa-star-atlas)",
     )
     parser.add_argument("--out", type=Path, default=Path("public/textures/space"))
     parser.add_argument("--only", type=str, default="8,16,32,64", help="Comma-separated levels: 8,16,32,64")

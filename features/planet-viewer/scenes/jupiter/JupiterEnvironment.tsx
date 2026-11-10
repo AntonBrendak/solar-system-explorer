@@ -7,6 +7,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { type Group, type DirectionalLight } from "three";
 
 import type { PlanetEnvironmentProps } from "../../model/types";
+import { usePlanetMotion } from "../../model/planet-motion";
 
 import { getJupiterState, JUPITER_SPIN_RAD_PER_MS } from "./jupiter-state";
 
@@ -15,9 +16,11 @@ const SUN_DISTANCE = 20;
 
 export default function JupiterEnvironment({
   active,
+  animate,
   children,
   lighting,
 }: PlanetEnvironmentProps) {
+  const motion = usePlanetMotion();
   const bodyRef = useRef<Group>(null);
   const sunlightRef = useRef<DirectionalLight>(null);
 
@@ -42,7 +45,7 @@ export default function JupiterEnvironment({
   // ASTRONOMICAL UPDATES
 
   useEffect(() => {
-    if (!active || lighting !== "scene") {
+    if (!active || motion) {
       return;
     }
 
@@ -79,12 +82,13 @@ export default function JupiterEnvironment({
     return () => {
       window.clearInterval(interval);
     };
-  }, [active, lighting, invalidate]);
+  }, [active, invalidate, motion]);
 
   // CONTINUOUS JUPITER ROTATION
 
   useFrame(() => {
-    if (!active || lighting !== "scene" || !bodyRef.current) {
+    if (motion) return;
+    if (!active || !animate || !bodyRef.current) {
       return;
     }
 
@@ -123,7 +127,10 @@ export default function JupiterEnvironment({
       {/* No additional axial tilt:
           it is accounted for in the
           astronomical reference frame. */}
-      <group ref={bodyRef} rotation={[0, initialState.rotationY, 0]}>
+      <group
+        ref={bodyRef}
+        rotation={[0, motion ? 0 : initialState.rotationY, 0]}
+      >
         {children}
       </group>
     </>

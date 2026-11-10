@@ -31,6 +31,8 @@ jobs:
           cache: npm
       - name: Install locked dependencies
         run: npm ci
+      - name: Restore pinned Sky assets
+        run: npm run restore:sky
       - name: Lint
         run: npm run lint
       - name: Production build

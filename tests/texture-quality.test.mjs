@@ -7,6 +7,10 @@ import {
   nextTier,
   clampTier,
 } from "../features/planet-viewer/model/texture-quality.ts";
+import {
+  getModelTextureTarget,
+  estimatedPlanetTextureBytes,
+} from "../features/planet-viewer/model/texture-assets.ts";
 
 const device = {
   memory: 8,
@@ -21,6 +25,34 @@ const device = {
   dpr: 3,
   maxTextureSize: 16384,
 };
+
+test("map Full textures obey screen size, device/network constraints and decoded memory budget", () => {
+  assert.equal(getModelTextureTarget("mercury", device, 24), "1k");
+  assert.equal(
+    getModelTextureTarget("mercury", { ...device, memory: 2 }, 4000),
+    "1k",
+  );
+  assert.equal(
+    getModelTextureTarget("mercury", { ...device, saveData: true }, 4000),
+    "1k",
+  );
+  assert.equal(
+    getModelTextureTarget("mercury", { ...device, effectiveType: "3g" }, 4000),
+    "1k",
+  );
+  assert.equal(
+    getModelTextureTarget("mercury", { ...device, memory: 4 }, 4000),
+    "2k",
+  );
+  for (const id of ["earth", "mercury", "jupiter", "saturn"]) {
+    const target = getModelTextureTarget(id, device, 4000);
+    assert.ok(
+      estimatedPlanetTextureBytes(id, target) +
+        estimatedPlanetTextureBytes(id, "2k") <=
+        getTextureBudget(device.memory) / 2,
+    );
+  }
+});
 test("quality always progresses to the highest supported source tier, including on small screens", () => {
   assert.equal(getTexturePolicy(device).base, "2k");
   assert.equal(getTexturePolicy(device).maximum, "8k");

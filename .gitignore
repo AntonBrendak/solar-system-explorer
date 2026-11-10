@@ -22,3 +22,9 @@ playwright-report/
 .vinext/
 .wrangler/
 .venv-atlas/
+.sky-atlas-cache/
+/public/textures/space/revisions/
+/artifacts/
+__pycache__/
+*.py[cod]
+/.nasa-star-atlas/

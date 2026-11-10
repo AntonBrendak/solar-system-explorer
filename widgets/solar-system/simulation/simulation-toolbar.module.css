@@ -1,0 +1,126 @@
+.root {
+  width: 100%;
+  border: 1px solid var(--orbital-panel-border);
+  border-radius: var(--orbital-panel-radius);
+  background: var(--orbital-panel-background);
+  color: var(--orbital-panel-text);
+  backdrop-filter: blur(var(--orbital-panel-blur));
+  pointer-events: auto;
+  font-size: 12px;
+}
+.root summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  min-height: 44px;
+  padding: 10px 14px;
+  list-style: none;
+  cursor: pointer;
+}
+.root summary::-webkit-details-marker {
+  display: none;
+}
+.title {
+  font-weight: 600;
+  color: #eff7ff;
+}
+.root time {
+  font-variant-numeric: tabular-nums;
+}
+.status {
+  margin-left: auto;
+  color: #a7cfee;
+  font-variant-numeric: tabular-nums;
+}
+.chevron {
+  transition: transform 220ms;
+}
+.root[open] .chevron {
+  transform: rotate(180deg);
+}
+.controls {
+  max-height: 30dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 10px 10px;
+  border-top: 1px solid #b1d4f015;
+}
+.transport,
+.dateRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.transport label {
+  margin-left: auto;
+}
+.root button,
+.root select,
+.root input {
+  min-width: 44px;
+  min-height: 44px;
+  max-width: 100%;
+  border: 1px solid #a5c7e02b;
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: #8ac4fa0a;
+  color: #e6f1fa;
+  color-scheme: dark;
+  font: inherit;
+}
+.root button {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.root button:hover,
+.root button[aria-pressed="true"] {
+  background: #8ac4fa20;
+  border-color: #9bcefa70;
+}
+.root :is(button, select, input, summary):focus-visible {
+  outline: 2px solid var(--orbital-focus);
+  outline-offset: -2px;
+}
+.dateRow input {
+  flex: 1;
+  min-width: 210px;
+}
+.dateRow label {
+  flex-shrink: 0;
+}
+.hint {
+  margin: 8px 2px 0;
+  color: #90a9bd;
+  font-size: 11px;
+}
+@media (max-width: 600px) {
+  .root {
+    font-size: 11px;
+  }
+  .root summary {
+    gap: 4px 8px;
+  }
+  .title {
+    display: none;
+  }
+  .status {
+    margin-left: 0;
+  }
+  .chevron {
+    margin-left: auto;
+  }
+  .dateRow label {
+    width: 100%;
+  }
+  .dateRow input {
+    min-width: 180px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
+  }
+}

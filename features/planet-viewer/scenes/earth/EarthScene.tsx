@@ -15,9 +15,11 @@ import { earthTextures } from "./textures";
 import { getEarthRotationY } from "./earth-time";
 import type { CloudFrameState } from "./cloud-frame-state";
 import type { PlanetSceneProps } from "../../model/types";
+import { usePlanetMotion } from "../../model/planet-motion";
 
 /** Full scene content; Canvas, progressive loading and controls belong to PlanetStage. */
 export default function EarthScene({ active, animate }: PlanetSceneProps) {
+  const motion = usePlanetMotion();
   const sunDirection = useEarthSun();
   const groupRef = useRef<Mesh>(null);
   const waveTextureRef = useRef<Texture | null>(null);
@@ -40,7 +42,7 @@ export default function EarthScene({ active, animate }: PlanetSceneProps) {
 
   useFrame((_, delta) => {
     if (!groupRef.current || !active) return;
-    groupRef.current.rotation.y = getEarthRotationY(new Date(), 0);
+    groupRef.current.rotation.y = motion ? 0 : getEarthRotationY(new Date(), 0);
     const waveTexture = waveTextureRef.current;
     if (waveTexture && animate) {
       waveTexture.offset.x = (waveTexture.offset.x + delta * 0.016) % 1;
@@ -57,13 +59,14 @@ export default function EarthScene({ active, animate }: PlanetSceneProps) {
           roughnessMap={roughnessMap}
           normalMap={normalMap}
           clearcoatMap={clearcoatMap}
-          roughness={2.5}
-          metalness={0.1}
+          roughness={1}
+          metalness={0}
           normalScale={[1, 1]}
-          clearcoat={1}
+          clearcoat={0.35}
+          reflectivity={0.3}
           clearcoatNormalMap={waveNormalMap}
-          clearcoatNormalScale={[0.4, 0.4]}
-          clearcoatRoughness={0.22}
+          clearcoatNormalScale={[0.2, 0.2]}
+          clearcoatRoughness={0.4}
         />
         <EarthNightLights sunDirection={sunDirection} />
         <EarthClouds

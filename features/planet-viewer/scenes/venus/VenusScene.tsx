@@ -7,6 +7,7 @@ import VenusAtmosphere from "./VenusAtmosphere";
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useVenusSun } from "./VenusEnvironment";
+import { usePlanetMotion } from "../../model/planet-motion";
 
 const CLOUD_ROTATION_MS = 4.2 * 24 * 60 * 60 * 1000;
 const CLOUD_EPOCH_MS = Date.UTC(2000, 0, 1, 12);
@@ -17,19 +18,21 @@ type VenusCloudsProps = {
 };
 
 function VenusClouds({ textureUrl, segments }: VenusCloudsProps) {
+  const motion = usePlanetMotion();
   const clouds = useSceneTexture(textureUrl);
   const meshRef = useRef<Mesh>(null);
 
   useFrame(() => {
     if (!meshRef.current) return;
 
-    const elapsed = Date.now() - CLOUD_EPOCH_MS;
+    const elapsed = (motion?.date.getTime() ?? Date.now()) - CLOUD_EPOCH_MS;
 
     const phase =
       ((elapsed % CLOUD_ROTATION_MS) + CLOUD_ROTATION_MS) % CLOUD_ROTATION_MS;
 
     // Cloud superrotation completes one turn in approximately 4.2 Earth days.
-    meshRef.current.rotation.y = -(phase / CLOUD_ROTATION_MS) * Math.PI * 2;
+    meshRef.current.rotation.y =
+      -(phase / CLOUD_ROTATION_MS) * Math.PI * 2 - (motion?.rotation.spin ?? 0);
   });
 
   return (

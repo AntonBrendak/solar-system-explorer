@@ -1,215 +1,369 @@
-
 "use client";
 
 import {
-  Suspense,
   useCallback,
   useEffect,
+  useMemo,
+  useRef,
   useState,
+  type CSSProperties,
 } from "react";
+
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
 import { ACESFilmicToneMapping } from "three";
+import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
+
+import { planetIds } from "@/entities/planet/types";
+import type { PlanetId } from "@/entities/planet/types";
+import { useSceneMotion } from "@/shared/lib/useSceneMotion";
+import { SolarSystemNavigation } from "./navigation/SolarSystemNavigation";
+import { SolarObjectInfo } from "./info/SolarObjectInfo";
+import { HudStatus } from "./info/HudStatus";
+import { createPerformanceStore } from "./performance/performance-store";
+import { PerformanceMonitor } from "./performance/PerformanceMonitor";
+import { PerformancePanel } from "./performance/PerformancePanel";
+import { ErrorBoundary } from "@/shared/ui/ErrorBoundary";
+import { ResourceBudgetProvider } from "@/features/planet-viewer";
 
 import { SolarSystemLoader } from "./SolarSystemLoader";
+import { SolarSystemBodies } from "./SolarSystemBodies";
+import { MarkerProjection } from "./markers/MarkerProjection";
+import { SolarSystemMarkers } from "./markers/SolarSystemMarkers";
+import { createMarkerStore } from "./markers/marker-store";
+import { createCameraStore } from "./camera/camera-store";
+import { CameraToolbar } from "./camera/CameraToolbar";
+import { createSimulationStore } from "./simulation/simulation-store";
+import { SimulationClock } from "./simulation/SimulationClock";
+import { SimulationToolbar } from "./simulation/SimulationToolbar";
+
+import { SolarSystemCameraRig } from "./SolarSystemCameraRig";
+
+import type { SolarMapFocus } from "./model/types";
+
 import { SolarPhoenix } from "./sun/SolarPhoenix";
 import { SunBloom } from "./sun/SunBloom";
-import { StarSphere } from "./sky/StarSphere";
-import { StarTileManager } from "./sky/StarTileManager";
-import { SolarSystemBodies } from "./SolarSystemBodies";
 
-type SkyState = {
-  uploaded: number;
-  total: number;
-  ready: boolean;
-  error: string | null;
-};
+import { SkySystem } from "./sky/SkySystem";
+import { atlasLock } from "./sky/model/sky-manifest";
+import { CelestialSky } from "./sky/CelestialSky";
+
+import { useMapReadiness } from "./model/useMapReadiness";
+
+import styles from "./solar-system-map.module.css";
 
 export function SolarSystemExperience() {
-  const [sky, setSky] = useState<SkyState>({
-    uploaded: 0,
-    total: 0,
-    ready: false,
-    error: null,
-  });
-  const [simulationDate] = useState(() => new Date());
-  
-  const [sunReady, setSunReady] =
-    useState(false);
-
-  const [showLoader, setShowLoader] =
-    useState(true);
-
-  const handleSkyProgress = useCallback(
-    (uploaded: number, total: number) => {
-      setSky((previous) =>
-        previous.uploaded === uploaded &&
-        previous.total === total
-          ? previous
-          : { ...previous, uploaded, total },
-      );
-    },
-    [],
+  return (
+    <ResourceBudgetProvider>
+      <MapExperience />
+    </ResourceBudgetProvider>
   );
+}
 
-  const handleSkyReady = useCallback(() => {
-    setSky((previous) =>
-      previous.ready
-        ? previous
-        : { ...previous, ready: true },
+function MapExperience() {
+  const t = useTranslations("map");
+  const locale = useLocale();
+  const [sceneFailed, setSceneFailed] = useState(false);
+  const [skyState, setSkyState] = useState<"ready" | "restoring" | "failed">(
+    "ready",
+  );
+  const handleSceneError = useCallback(() => setSceneFailed(true), []);
+
+  const {
+    sky,
+    sunReady,
+    readyModels,
+    showLoader,
+    sceneReady,
+    progress,
+    handleBaseSkyReady,
+    handleOrbitModelReady,
+    handlePreviewReady,
+    handlePreviewError,
+    handleSkyReady,
+    handleSunReady,
+  } = useMapReadiness();
+
+  const simulation = useMemo(() => createSimulationStore(), []);
+  const performanceStore = useMemo(() => createPerformanceStore(), []);
+  const handleSkyPrepared = useCallback(() => {
+    handleBaseSkyReady();
+    handleSkyReady();
+  }, [handleBaseSkyReady, handleSkyReady]);
+  const [orbitDate, setOrbitDate] = useState(() => new Date());
+  const [infoTarget, setInfoTarget] = useState<SolarMapFocus>(null);
+  const [markerHover, setMarkerHover] = useState<SolarMapFocus>(null);
+  const [detailError, setDetailError] = useState<PlanetId | null>(null);
+  const [markerStore] = useState(createMarkerStore);
+  const cameraStore = useMemo(() => createCameraStore(), []);
+  const highlightedTarget = markerHover ?? infoTarget;
+
+  const [selection, setSelection] = useState<{
+    target: SolarMapFocus;
+    requestId: number;
+  }>({ target: null, requestId: 0 });
+  const focusedTarget = selection.target;
+  const animate = useSceneMotion(false, true);
+  const hud = useRef<HTMLDivElement>(null);
+  const [bottomInset, setBottomInset] = useState(0);
+  const [sideInset, setSideInset] = useState(0);
+  const [topInset, setTopInset] = useState(0);
+  const [infoCollapsed, setInfoCollapsed] = useState(false);
+  const infoPanel = useRef<HTMLElement>(null);
+
+  const handleSelect = useCallback((target: SolarMapFocus) => {
+    setSelection((previous) => ({ target, requestId: previous.requestId + 1 }));
+  }, []);
+  const handleRestoreFocus = useCallback((target: SolarMapFocus) => {
+    setSelection((previous) =>
+      previous.target === target ? previous : { ...previous, target },
     );
   }, []);
 
-  const handleSkyError = useCallback(
-    (error: Error) => {
-      setSky((previous) => ({
-        ...previous,
-        error: error.message,
-      }));
-    },
-    [],
-  );
-  
-  const handleSunReady = useCallback(() => {
-    setSunReady(true);
-  }, []);
-
-  const sceneReady =
-    sunReady && (sky.ready || sky.error !== null);
-
-  const progress =
-    sky.total > 0
-      ? Math.round(
-          ((sky.uploaded + Number(sunReady)) /
-            (sky.total + 1)) * 100,
-        )
-      : null;
+  useEffect(() => {
+    const element = hud.current;
+    if (!element) return;
+    const measure = () => {
+      const bottom = Number.parseFloat(getComputedStyle(element).bottom) || 0;
+      setBottomInset(element.offsetHeight + bottom + 12);
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    window.addEventListener("resize", measure);
+    measure();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [sceneFailed]);
 
   useEffect(() => {
-    if (!sceneReady) return;
+    const element = infoPanel.current;
+    if (!element) return;
+    const measure = () => {
+      const desktop = window.matchMedia("(min-width: 1024px)").matches;
+      const bounds = element.getBoundingClientRect();
+      setSideInset(
+        focusedTarget !== null && !infoCollapsed && desktop
+          ? Math.ceil(bounds.right) + 16
+          : 0,
+      );
+      setTopInset(desktop ? 0 : Math.ceil(bounds.bottom) + 12);
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    window.addEventListener("resize", measure);
+    measure();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [focusedTarget, infoCollapsed, sceneFailed]);
 
-    const timer = window.setTimeout(() => {
-      setShowLoader(false);
-    }, 700);
+  const controlsBlocked = showLoader || skyState !== "ready";
 
-    return () => window.clearTimeout(timer);
-  }, [sceneReady]);
+  if (sceneFailed) {
+    return (
+      <main className={styles.root}>
+        <div role="alert" className={styles.fallback}>
+          <h1>{t("unavailable")}</h1>
+          <Link href={`/?lang=${locale}`}>{t("home")}</Link>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main
+      onPointerDown={(event) => {
+        if (!hud.current?.contains(event.target as Node)) setInfoTarget(null);
+      }}
       data-sky-ready={sky.ready}
       data-sun-ready={sunReady}
+      data-models-ready={`${readyModels.size}/${planetIds.length * 2 + 1}`}
       data-scene-ready={sceneReady}
       data-sky-progress={`${sky.uploaded}/${sky.total}`}
-      style={{
-        position: "relative",
-        width: "100%",
-        height: "100dvh",
-        minHeight: 520,
-        overflow: "hidden",
-        background: "#060a11",
-      }}
+      className={styles.root}
+      style={{ "--map-bottom-inset": `${bottomInset}px` } as CSSProperties}
     >
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 0,
-        }}
-      >
-        <Canvas
-          camera={{
-            position: [0, 0, 6.2],
-            fov: 48,
-            near: 0.01,
-            far: 100000,
-          }}
-          dpr={[1, 1.5]}
-          frameloop="always"
-          gl={{
-            antialias: true,
-            alpha: false,
-            powerPreference: "high-performance",
-          }}
-          onCreated={({ gl }) => {
-            gl.toneMapping = ACESFilmicToneMapping;
-            gl.toneMappingExposure = 0.9;
-          }}
+      <Link className={styles.homeLink} href={`/?lang=${locale}`}>
+        <span aria-hidden="true">←</span>
+        <span>{t("home")}</span>
+      </Link>
+      {skyState !== "ready" && (
+        <div
+          className={styles.skyFallback}
+          role="status"
+          data-sky-fallback={skyState}
+          style={
+            atlasLock.root
+              ? { backgroundImage: `url(${atlasLock.root}/reserve.webp)` }
+              : undefined
+          }
         >
-          <Suspense fallback={null}>
-            <StarSphere />
+          <p>
+            {t(skyState === "restoring" ? "skyRestoring" : "skyUnavailable")}
+          </p>
+        </div>
+      )}
+      <div
+        className={styles.scene}
+        inert={controlsBlocked}
+        aria-hidden={controlsBlocked}
+      >
+        <ErrorBoundary onError={handleSceneError}>
+          <Canvas
+            camera={{
+              position: [0, 850, 1800],
+              fov: 48,
+              near: 0.01,
+              far: 100000,
+            }}
+            dpr={[1, 1.5]}
+            frameloop="always"
+            gl={{
+              antialias: true,
+              alpha: false,
+              powerPreference: "high-performance",
+            }}
+            onCreated={({ gl }) => {
+              gl.domElement.dataset.mapCanvas = "true";
+              // PerformanceMonitor resets once per complete frame, including bloom passes.
+              gl.info.autoReset = false;
+              gl.toneMapping = ACESFilmicToneMapping;
 
-            <StarTileManager
-              onInitialProgress={handleSkyProgress}
-              onInitialReady={handleSkyReady}
-              onInitialError={handleSkyError}
-              maxActiveTiles={12}
+              gl.toneMappingExposure = 0.9;
+            }}
+          >
+            <SimulationClock store={simulation} onOrbitDate={setOrbitDate} />
+            <PerformanceMonitor store={performanceStore} />
+            <CelestialSky simulation={simulation}>
+              <SkySystem
+                resourcesReady={
+                  sunReady && readyModels.size === planetIds.length * 2 + 1
+                }
+                onReady={handleSkyPrepared}
+                onState={setSkyState}
+                onMetrics={performanceStore.publishSky}
+              />
+            </CelestialSky>
+
+            <ambientLight intensity={0.22} />
+            <pointLight
+              position={[0, 0, 0]}
+              intensity={3.2}
+              decay={0}
+              color="#fff5e7"
             />
-
             <SolarPhoenix
+              simulation={simulation}
               onReady={handleSunReady}
+              animate={animate}
             />
+
             <SolarSystemBodies
-              date={simulationDate}
-              showOrbits={true}
-              showLabels={false}
+              simulation={simulation}
+              orbitDate={orbitDate}
+              focusActive={focusedTarget !== null}
+              focusedPlanet={focusedTarget === "sun" ? null : focusedTarget}
+              hoveredPlanet={
+                highlightedTarget === "sun" ? null : highlightedTarget
+              }
+              onPlanetSelect={handleSelect}
+              animate={animate}
+              onPlanetReady={handleOrbitModelReady}
+              onDetailError={setDetailError}
             />
+
             <SunBloom />
 
-            <OrbitControls
-              makeDefault
-              enableDamping
-              dampingFactor={0.06}
-              enablePan={false}
-              minDistance={2.7}
-              maxDistance={30000}
-              rotateSpeed={0.55}
-              zoomSpeed={0.75}
+            <SolarSystemCameraRig
+              simulation={simulation}
+              focus={focusedTarget}
+              requestId={selection.requestId}
+              bottomInset={bottomInset}
+              sideInset={sideInset}
+              topInset={topInset}
+              enabled={!showLoader}
+              canvasLabel={t("camera.canvas")}
+              store={cameraStore}
+              onRestoreFocus={handleRestoreFocus}
             />
-          </Suspense>
-        </Canvas>
+            <MarkerProjection
+              simulation={simulation}
+              selected={focusedTarget}
+              bottomInset={bottomInset}
+              sideInset={sideInset}
+              topInset={topInset}
+              store={markerStore}
+            />
+          </Canvas>
+        </ErrorBoundary>
+      </div>
+
+      <SolarSystemMarkers
+        store={markerStore}
+        selected={focusedTarget}
+        hidden={controlsBlocked}
+        onSelect={handleSelect}
+        onHover={setMarkerHover}
+      />
+      <PerformancePanel store={performanceStore} hidden={showLoader} />
+
+      <aside
+        ref={infoPanel}
+        className={styles.info}
+        aria-hidden={controlsBlocked}
+        inert={controlsBlocked}
+        data-loading={showLoader}
+      >
+        <HudStatus selected={focusedTarget} camera={cameraStore} />
+        {focusedTarget !== null && (
+          <SolarObjectInfo
+            key={focusedTarget}
+            selected={focusedTarget}
+            simulation={simulation}
+            collapsed={infoCollapsed}
+            onToggle={() => setInfoCollapsed((value) => !value)}
+          />
+        )}
+      </aside>
+
+      <div
+        ref={hud}
+        className={styles.hud}
+        data-loading={!sceneReady}
+        aria-hidden={controlsBlocked}
+        inert={controlsBlocked}
+      >
+        {sky.error && (
+          <div role="status" className={styles.skyError}>
+            {t("skyError")}
+          </div>
+        )}
+        {detailError && (
+          <div role="status" className={styles.skyError}>
+            {t("detailError")}
+          </div>
+        )}
+        <SimulationToolbar store={simulation} />
+        <CameraToolbar store={cameraStore} />
+        <SolarSystemNavigation
+          performance={performanceStore}
+          simulation={simulation}
+          selected={focusedTarget}
+          onSelect={handleSelect}
+          onInspect={setInfoTarget}
+          animate={animate}
+          preparing={showLoader}
+          onReady={handlePreviewReady}
+          onError={handlePreviewError}
+        />
       </div>
 
       {showLoader && (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 2,
-            opacity: sceneReady ? 0 : 1,
-            pointerEvents: sceneReady
-              ? "none"
-              : "auto",
-            transition: "opacity 650ms ease",
-          }}
-        >
-          <SolarSystemLoader
-            progress={progress}
-          />
-        </div>
-      )}
-
-      {sky.error && sceneReady && (
-        <div
-          role="status"
-          style={{
-            position: "absolute",
-            bottom: 12,
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 3,
-            maxWidth: "90%",
-            padding: "9px 14px",
-            borderRadius: 8,
-            background: "#321c20",
-            color: "#ffe1df",
-            fontSize: 13,
-            textAlign: "center",
-            pointerEvents: "none",
-          }}
-        >
-          Some high-resolution star tiles could not be loaded.
-          Showing the base sky.
+        <div className={styles.loader} data-ready={sceneReady}>
+          <SolarSystemLoader progress={progress} />
         </div>
       )}
     </main>

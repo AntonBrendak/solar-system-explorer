@@ -19,13 +19,16 @@ export default function EarthEnvironment({
   active,
   children,
   lighting,
+  sunDirection,
 }: PlanetEnvironmentProps) {
   const sun = useMemo(() => new Vector3(-5, 2, 5).normalize(), []);
   const light = useRef<DirectionalLight>(null);
   useFrame(() => {
     if (!active) return;
     const now = new Date();
-    getSunDirection(now, sun).applyAxisAngle(AXIS, getEarthRotationY(now, 0));
+    if (sunDirection) sun.copy(sunDirection);
+    else
+      getSunDirection(now, sun).applyAxisAngle(AXIS, getEarthRotationY(now, 0));
     light.current?.position.copy(sun).multiplyScalar(10);
   }, -1);
 

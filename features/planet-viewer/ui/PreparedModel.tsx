@@ -2,6 +2,7 @@
 
 import {
   useCallback,
+  useContext,
   useEffect,
   useRef,
   useState,
@@ -16,11 +17,12 @@ import {
   recordPreparation,
 } from "../model/scene-resources";
 import { idleTurn } from "@/shared/lib/idle-task";
+import { GpuResourceContext } from "@/shared/lib/gpu-resource-context";
 import { TextureTierContext, type TextureTier } from "../model/texture-quality";
 import type { PlanetSceneProps } from "../model/types";
 
 /** Upload one texture per idle turn, then compile without a synchronous readiness wait. */
-function PrepareScene({
+export function PrepareScene({
   root,
   active,
   onPrepared,
@@ -33,6 +35,7 @@ function PrepareScene({
 }) {
   const { gl, camera, scene, invalidate } = useThree();
   const prepared = useRef(false);
+  const resources = useContext(GpuResourceContext);
   const [error, setError] = useState<unknown>(null);
   useEffect(() => {
     if (root.current) return registerSceneResources(root.current, resourceId);
@@ -43,7 +46,16 @@ function PrepareScene({
     const controller = new AbortController();
     const { signal } = controller;
     async function prepare() {
-      for (const texture of sceneTextures(group)) {
+      const textures = sceneTextures(group);
+      const admitted = resources?.acquire(group, gl, textures, {
+        label: resourceId,
+        pinned: true,
+        essential: !resourceId.includes(":full:"),
+        presented: () => group.visible,
+      });
+      if (admitted === false)
+        throw new Error("The shared GPU texture budget is exhausted");
+      for (const texture of textures) {
         if (!(await idleTurn(signal))) return;
         gl.initTexture(texture);
       }
@@ -58,14 +70,27 @@ function PrepareScene({
     void prepare().catch((cause: unknown) => {
       if (!signal.aborted) setError(cause);
     });
-    return () => controller.abort();
-  }, [active, camera, gl, invalidate, onPrepared, root, scene, resourceId]);
+    return () => {
+      controller.abort();
+      resources?.release(group);
+    };
+  }, [
+    active,
+    camera,
+    gl,
+    invalidate,
+    onPrepared,
+    root,
+    scene,
+    resourceId,
+    resources,
+  ]);
   if (error) throw error;
   return null;
 }
 
 /** Reveal the Canvas only after its own first prepared frame has been rendered. */
-function NotifyRendered({
+export function NotifyRendered({
   active,
   ready,
   onReady,

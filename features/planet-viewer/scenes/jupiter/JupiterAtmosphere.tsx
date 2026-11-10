@@ -67,6 +67,7 @@ type VectorUniform = {
 type Props = {
   textureUrl: string;
   active?: boolean;
+  animate?: boolean;
 };
 
 // HELPERS
@@ -92,6 +93,7 @@ function cyclicPhase(elapsedMs: number, periodMs: number): number {
 export default function JupiterAtmosphere({
   textureUrl,
   active = true,
+  animate = true,
 }: Props) {
   const originalMap = useSceneTexture(textureUrl);
 
@@ -122,6 +124,7 @@ export default function JupiterAtmosphere({
   const flashUvRef = useRef<VectorUniform | null>(null);
 
   const debugStartRef = useRef<number | null>(null);
+  const animationTime = useRef<number | null>(null);
 
   // ANIMATION
 
@@ -133,7 +136,9 @@ export default function JupiterAtmosphere({
       return;
     }
 
-    const now = Date.now();
+    if (animate || animationTime.current === null)
+      animationTime.current = Date.now();
+    const now = animationTime.current;
 
     if (debugStartRef.current === null) {
       debugStartRef.current = now;
@@ -175,6 +180,7 @@ export default function JupiterAtmosphere({
     if (!flash || !flashUv) return;
 
     flash.value = 0;
+    if (!animate) return;
 
     const slot = Math.floor(now / FLASH_WINDOW_MS);
 

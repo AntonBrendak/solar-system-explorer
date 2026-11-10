@@ -1,7 +1,15 @@
-import { Body, Ecliptic, HelioVector } from "astronomy-engine";
+import {
+  Body,
+  Ecliptic,
+  HelioState,
+  HelioVector,
+  RotateVector,
+  Rotation_EQJ_ECT,
+  Vector,
+} from "astronomy-engine";
 import type { PlanetId } from "./types";
 
-const bodies: Record<PlanetId, Body> = {
+export const planetBodies: Record<PlanetId, Body> = {
   mercury: Body.Mercury,
   venus: Body.Venus,
   earth: Body.Earth,
@@ -20,7 +28,7 @@ export type PlanetPosition = {
 };
 /** Geometric heliocentric position, true ecliptic of date; no light-time correction. */
 export function getPlanetPosition(id: PlanetId, date: Date): PlanetPosition {
-  const vector = HelioVector(bodies[id], date);
+  const vector = HelioVector(planetBodies[id], date);
   const ecliptic = Ecliptic(vector);
   return {
     id,
@@ -45,10 +53,12 @@ export const SOLAR_SCALE = {
  * to the Solar System scene scale.
  */
 export function kmToSceneUnits(km: number): number {
-  return (
-    (km / SOLAR_SCALE.sunRadiusKm) *
-    SOLAR_SCALE.sunRadiusScene
-  );
+  return (km / SOLAR_SCALE.sunRadiusKm) * SOLAR_SCALE.sunRadiusScene;
+}
+
+/** Convert camera movement back to the physical distance represented by the map. */
+export function sceneUnitsToKm(units: number): number {
+  return (units / SOLAR_SCALE.sunRadiusScene) * SOLAR_SCALE.sunRadiusKm;
 }
 
 export type PlanetScenePosition = {
@@ -58,6 +68,31 @@ export type PlanetScenePosition = {
   z: number;
   distanceAu: number;
 };
+
+/** Position and velocity in scene units per millisecond for Hermite interpolation. */
+export function getPlanetSceneState(id: PlanetId, date: Date) {
+  const state = HelioState(planetBodies[id], date);
+  const rotation = Rotation_EQJ_ECT(date);
+  const position = RotateVector(
+    rotation,
+    new Vector(state.x, state.y, state.z, state.t),
+  );
+  const velocity = RotateVector(
+    rotation,
+    new Vector(state.vx, state.vy, state.vz, state.t),
+  );
+  const scale = kmToSceneUnits(SOLAR_SCALE.astronomicalUnitKm);
+  return {
+    id,
+    x: position.x * scale,
+    y: position.z * scale,
+    z: -position.y * scale,
+    distanceAu: Math.hypot(state.x, state.y, state.z),
+    vx: (velocity.x * scale) / 86400000,
+    vy: (velocity.z * scale) / 86400000,
+    vz: (-velocity.y * scale) / 86400000,
+  };
+}
 
 /**
  * Convert Astronomy Engine heliocentric coordinates
@@ -74,19 +109,15 @@ export function getPlanetScenePosition(
 ): PlanetScenePosition {
   const position = getPlanetPosition(id, date);
 
-  const longitude =
-    (position.longitude * Math.PI) / 180;
+  const longitude = (position.longitude * Math.PI) / 180;
 
-  const latitude =
-    (position.latitude * Math.PI) / 180;
+  const latitude = (position.latitude * Math.PI) / 180;
 
   const distance = kmToSceneUnits(
-    position.distanceAu *
-      SOLAR_SCALE.astronomicalUnitKm,
+    position.distanceAu * SOLAR_SCALE.astronomicalUnitKm,
   );
 
-  const planarDistance =
-    distance * Math.cos(latitude);
+  const planarDistance = distance * Math.cos(latitude);
 
   return {
     id,

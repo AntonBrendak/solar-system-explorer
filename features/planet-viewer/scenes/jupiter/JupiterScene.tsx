@@ -22,11 +22,12 @@ export function JupiterLite() {
 
 // FULL 8K
 
-export default function JupiterScene({ active }: PlanetSceneProps) {
+export default function JupiterScene({ active, animate }: PlanetSceneProps) {
   return (
     <JupiterAtmosphere
       textureUrl="/textures/jupiter/jupiterMap.jpg"
       active={active}
+      animate={animate}
     />
   );
 }

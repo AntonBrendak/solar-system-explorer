@@ -9,6 +9,14 @@
   --muted: #8c9aa9;
   --accent: #a5cae8;
   --line: #c2d5ed18;
+  --orbital-panel-border: #b1d4f025;
+  --orbital-panel-background: linear-gradient(140deg, #152131ed, #090f18f5);
+  --orbital-panel-text: #c6d9e9;
+  --orbital-panel-radius: 14px;
+  --orbital-panel-blur: 18px;
+  --orbital-focus: #acd8ff;
+  --orbital-active-border: #9bcefa50;
+  --orbital-active-background: #8ac4fa12;
   --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
 }
 [data-page-shell] {

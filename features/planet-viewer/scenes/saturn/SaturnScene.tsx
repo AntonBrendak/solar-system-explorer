@@ -23,6 +23,8 @@ import { useSaturnSun } from "./SaturnEnvironment";
 import { patchSaturnRings, patchSaturnSurface } from "./saturn-shaders";
 
 import { SATURN_VIEW_ROTATION } from "./saturn-sun";
+import { SATURN_RINGS } from "@/entities/planet/shape";
+import { usePlanetMotion } from "../../model/planet-motion";
 
 // SATURN DIMENSIONS
 
@@ -32,8 +34,8 @@ const PLANET_RADIUS = 2;
 const POLAR_RATIO = 0.902;
 
 // Main rings relative to the planet radius.
-const RING_INNER = 2 * 1.24;
-const RING_OUTER = 2 * 2.27;
+const RING_INNER = PLANET_RADIUS * SATURN_RINGS.inner;
+const RING_OUTER = PLANET_RADIUS * SATURN_RINGS.outer;
 
 // RADIAL RING GEOMETRY
 
@@ -64,6 +66,7 @@ function createRadialRing(segments: number) {
 // SATURN MODEL
 
 function SaturnModel({ detailed }: { detailed: boolean }) {
+  const motion = usePlanetMotion();
   const sun = useSaturnSun();
   const { size } = useThree();
 
@@ -148,7 +151,10 @@ function SaturnModel({ detailed }: { detailed: boolean }) {
   // RENDER
 
   return (
-    <group rotation={SATURN_VIEW_ROTATION} scale={modelScale}>
+    <group
+      rotation={motion ? [0, 0, 0] : SATURN_VIEW_ROTATION}
+      scale={modelScale}
+    >
       {/* SATURN PLANET */}
       <mesh geometry={geometry.sphere}>
         <meshStandardMaterial

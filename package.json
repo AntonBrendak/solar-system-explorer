@@ -5,18 +5,21 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "node scripts/require-sky-atlas.mjs && next build --turbopack",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "test": "node --test tests/*.test.mjs",
     "test:e2e": "playwright test",
     "dev:vinext": "vite dev --port 3001",
-    "build:vinext": "vite build",
+    "build:vinext": "node scripts/require-sky-atlas.mjs && vite build",
     "start:vinext": "wrangler dev --config dist/server/wrangler.json",
     "deploy:vinext": "vinext-cloudflare deploy --config dist/server/wrangler.json",
     "prepare:textures": "node scripts/prepare-planet-tiers.mjs",
-    "prepare:og": "node scripts/prepare-og-images.mjs"
+    "prepare:og": "node scripts/prepare-og-images.mjs",
+    "prepare:sky": "node scripts/prepare-sky.mjs",
+    "restore:sky": "node scripts/restore-sky.mjs",
+    "validate:sky-registration": "node scripts/validate-sky-registration.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

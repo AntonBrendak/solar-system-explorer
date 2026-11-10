@@ -1,0 +1,66 @@
+.root {
+  display: inline-flex;
+  max-width: 100%;
+}
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  text-align: left;
+}
+.menu {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  padding: 6px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #759cb24d;
+  border-radius: 12px;
+  background: #101c2b;
+  color: #e6f1fa;
+  color-scheme: dark;
+  font-family: inherit;
+  font-size: 12px;
+  box-shadow: 0 16px 44px #0009;
+}
+.menu::backdrop {
+  background: transparent;
+}
+.menu .option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  padding: 8px 10px;
+  background: transparent;
+  color: #e6f1fa;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.option > span {
+  display: grid;
+  gap: 3px;
+}
+.option small {
+  color: #91abc1;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.menu .option:hover,
+.menu .option:focus-visible {
+  background: #25394c;
+  outline: none;
+  border-color: var(--orbital-focus);
+}
+.menu .option[aria-selected="true"] {
+  background: #20364a;
+  color: #bde3ff;
+}

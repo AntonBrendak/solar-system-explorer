@@ -1,0 +1,86 @@
+{
+  "method": "post-codec, linear-luminance, background-subtracted isolated-star centroids",
+  "thresholdPixels": 0.25,
+  "minimumMatchedStarsPerPair": 32,
+  "sampling": {
+    "blockPixels": 512,
+    "maxStarsPerBlock": 8,
+    "apertureRadius": 5,
+    "halo": 8,
+    "traversal": "tile-major; complete spatial grid",
+    "decodedTileCacheMiBPerReader": 96
+  },
+  "pairs": [
+    {
+      "coarseLevel": 2,
+      "fineLevel": 4,
+      "commonWidth": 2048,
+      "strata": 8,
+      "matchedStars": 64,
+      "unmatchedStars": 0,
+      "maxErrorPixels": 0.05365416683678149,
+      "p95ErrorPixels": 0.03221868053260241,
+      "passed": true,
+      "failedExamples": []
+    },
+    {
+      "coarseLevel": 4,
+      "fineLevel": 8,
+      "commonWidth": 4096,
+      "strata": 32,
+      "matchedStars": 256,
+      "unmatchedStars": 0,
+      "maxErrorPixels": 0.09869748767486373,
+      "p95ErrorPixels": 0.04999997858865228,
+      "passed": true,
+      "failedExamples": []
+    },
+    {
+      "coarseLevel": 8,
+      "fineLevel": 16,
+      "commonWidth": 8192,
+      "strata": 128,
+      "matchedStars": 1024,
+      "unmatchedStars": 0,
+      "maxErrorPixels": 0.11438281572739091,
+      "p95ErrorPixels": 0.04218250007405444,
+      "passed": true,
+      "failedExamples": []
+    },
+    {
+      "coarseLevel": 16,
+      "fineLevel": 32,
+      "commonWidth": 16384,
+      "strata": 512,
+      "matchedStars": 4096,
+      "unmatchedStars": 0,
+      "maxErrorPixels": 0.01576251001227749,
+      "p95ErrorPixels": 0.007306583761947786,
+      "passed": true,
+      "failedExamples": []
+    },
+    {
+      "coarseLevel": 32,
+      "fineLevel": 64,
+      "commonWidth": 32768,
+      "strata": 2048,
+      "matchedStars": 16384,
+      "unmatchedStars": 0,
+      "maxErrorPixels": 0.018475587468455564,
+      "p95ErrorPixels": 0.00601180533922794,
+      "passed": true,
+      "failedExamples": []
+    }
+  ],
+  "passed": true,
+  "manifestSha256": "9b63ac9fb41a1aa65b8716b75cd31c10de9115817b68f03e42eddcea3e5a19cf",
+  "revision": "fafbe0927e770783d1e9ff33a91211beb21515ff1ed2d34f6b0ff2eb2199951e",
+  "validatorSha256": "26af25fab30a900ca88a4902ef2954675450842dfd544c4ff9008ddb7b647cd4",
+  "toolchain": {
+    "python": "3.11.9",
+    "numpy": "2.4.6",
+    "pillow": "13.0.0",
+    "libwebp": "1.6.0",
+    "openimageio": "3.2.2.0"
+  }
+}

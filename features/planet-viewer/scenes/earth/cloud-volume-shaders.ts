@@ -19,7 +19,7 @@ export const cloudVolumeFragment = /* glsl */ `
   uniform sampler2D uPrecipitationMask;
   uniform float uCloudBlend;
   uniform float uCloudPhase;
-  uniform mat4 uWorldToCloud;
+  uniform vec3 uCloudEye;
   uniform vec3 uSunLocal;
   uniform vec4 uLightning[4];
   varying vec3 vCloudPosition;
@@ -61,7 +61,7 @@ export const cloudVolumeFragment = /* glsl */ `
   }
 
   void main() {
-    vec3 eye = (uWorldToCloud * vec4(cameraPosition, 1.0)).xyz;
+    vec3 eye = uCloudEye;
     vec3 ray = normalize(vCloudPosition - eye);
     vec2 shell = intersectSphere(eye, ray, TOP);
     if (shell.y <= 0.0) discard;

@@ -22,19 +22,19 @@ const vertexShader = /* glsl */ `
   void main() {
     vUv = uv;
 
-    vec4 worldPosition =
-      modelMatrix * vec4(position, 1.0);
+    vec4 viewPosition =
+      modelViewMatrix * vec4(position, 1.0);
 
     vWorldNormal =
       normalize(mat3(modelMatrix) * normal);
 
-    vViewDir =
-      normalize(cameraPosition - worldPosition.xyz);
+    // Avoid subtracting large world coordinates for a physically small globe.
+    vViewDir = normalize(
+      (vec4(normalize(-viewPosition.xyz), 0.0) * viewMatrix).xyz
+    );
 
     gl_Position =
-      projectionMatrix *
-      viewMatrix *
-      worldPosition;
+      projectionMatrix * viewPosition;
   }
 `;
 
@@ -123,12 +123,12 @@ export default function UranusAtmosphere({
     [sunDirection],
   );
 
-  useFrame((_, delta) => {
+  useFrame(({ clock }) => {
     if (!active || !animate || !materialRef.current) {
       return;
     }
 
-    materialRef.current.uniforms.uTime.value += delta;
+    materialRef.current.uniforms.uTime.value = clock.elapsedTime;
   });
 
   return (

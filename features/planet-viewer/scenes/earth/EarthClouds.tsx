@@ -46,6 +46,7 @@ type CloudUniforms = {
   first: { value: Texture };
   fallback: { value: Texture };
   worldToCloud: { value: Matrix4 };
+  eyeLocal: { value: Vector3 };
   sunLocal: { value: Vector3 };
   lightning: { value: Vector4[] };
   next: { value: Texture };
@@ -133,6 +134,7 @@ export default function EarthClouds({
     first: { value: cloudTexture },
     fallback: { value: polarCloudTexture },
     worldToCloud: { value: new Matrix4() },
+    eyeLocal: { value: new Vector3() },
     sunLocal: { value: new Vector3() },
     lightning: {
       value: Array.from({ length: MAX_CLOUD_FLASHES }, () => new Vector4()),
@@ -157,7 +159,7 @@ export default function EarthClouds({
         uCloudBlend: values.blend,
         uCloudPhase: values.phase,
         uPrecipitationMask: values.precipitation,
-        uWorldToCloud: values.worldToCloud,
+        uCloudEye: values.eyeLocal,
         uSunLocal: values.sunLocal,
         uLightning: values.lightning,
       };
@@ -166,19 +168,24 @@ export default function EarthClouds({
     [cloudTexture],
   );
 
-  useFrame((_, delta) => {
+  useFrame(({ camera }, delta) => {
     const uniforms = uniformsRef.current;
     const frames = framesRef.current;
     const material = materialRef.current;
-    if (!active || !frames || !material || document.hidden) return;
     const mesh = meshRef.current;
     if (mesh) {
       mesh.updateWorldMatrix(true, false);
       uniforms.worldToCloud.value.copy(mesh.matrixWorld).invert();
+      // Subtract the large map translation on the CPU, before conversion to float uniforms.
+      camera
+        .getWorldPosition(uniforms.eyeLocal.value)
+        .applyMatrix4(uniforms.worldToCloud.value);
       uniforms.sunLocal.value
         .copy(sunDirection)
         .transformDirection(uniforms.worldToCloud.value);
     }
+
+    if (!active || !frames || !material || document.hidden) return;
 
     if (frames.reducedMotion) {
       const latest =
