@@ -6,6 +6,7 @@ export async function fetchSkyAsset(
   asset: SkyAsset,
   signal: AbortSignal,
   schedule?: <T>(work: () => T) => Promise<T>,
+  onProgress?: (loaded: number) => void,
 ): Promise<Blob> {
   const response = await fetch(url, { signal, cache: "force-cache" });
   if (!response.ok) {
@@ -39,6 +40,7 @@ export async function fetchSkyAsset(
   const reader = response.body?.getReader();
   if (!reader) throw new SkyAssetError("Sky response has no body", "transient");
   let offset = 0;
+  let lastProgress = -Infinity;
   try {
     for (;;) {
       const { value, done } = await reader.read();
@@ -59,6 +61,13 @@ export async function fetchSkyAsset(
         }
       } else bytes.set(value, offset);
       offset += value.length;
+      if (
+        onProgress &&
+        (offset === asset.bytes || performance.now() - lastProgress >= 100)
+      ) {
+        lastProgress = performance.now();
+        onProgress(offset);
+      }
     }
   } finally {
     await reader.cancel().catch(() => {});

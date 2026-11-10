@@ -117,6 +117,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "dist/**",
+    "artifacts/**",
+    "test-results/**",
     ".wrangler/**",
     ".vinext/**",
     ".cloudflare/**",

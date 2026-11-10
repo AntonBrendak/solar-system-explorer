@@ -16,6 +16,10 @@ import {
 } from "three";
 import { createSkyShader } from "../../widgets/solar-system/sky/rendering/SkyShader";
 import { coverageEdgeMask } from "../../widgets/solar-system/sky/rendering/sky-coverage";
+export {
+  renderSphereProjectionProbe,
+  renderCoverageFloorProbe,
+} from "./sky-sphere-probe";
 
 export function renderSkyProbe(parent: boolean, gradient = false) {
   const renderer = new WebGLRenderer({ antialias: false });
@@ -80,9 +84,12 @@ export function renderSkyProbe(parent: boolean, gradient = false) {
     table,
     core,
     new Vector2(64, 60),
+    "uv",
   );
   material.side = DoubleSide;
   material.uniforms.detailsEnabled.value = 1;
+  material.uniforms.coverageFloor.value = 64;
+  material.uniforms.zoneScale.value = 1e6;
   const geometry = new PlaneGeometry(2, 2);
   const uv = geometry.getAttribute("uv");
   const left = parent ? 35 / 64 : 7 / 16;

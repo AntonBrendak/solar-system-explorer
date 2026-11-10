@@ -7,6 +7,25 @@ import {
 } from "../widgets/solar-system/sky/streaming/SkyRequestPolicy.ts";
 import { fetchSkyAsset } from "../widgets/solar-system/sky/streaming/sky-fetch.ts";
 import { SkyWorkerClient } from "../widgets/solar-system/sky/streaming/SkyWorkerClient.ts";
+import { mapLoadingProgress } from "../widgets/solar-system/model/loading-progress.ts";
+
+test("models leave progress for actual Sky work instead of jumping to 94 percent", () => {
+  const input = {
+    models: 18,
+    modelTotal: 18,
+    sky: 0,
+    skyTotal: 1000,
+    ready: false,
+  };
+  assert.equal(mapLoadingProgress(input), 20);
+  assert.equal(mapLoadingProgress({ ...input, sky: 500 }), 60);
+  assert.equal(mapLoadingProgress({ ...input, sky: 1000 }), 99);
+  assert.equal(mapLoadingProgress({ ...input, sky: 1000, ready: true }), 100);
+  const samples = [0, 200, 400, 600, 800, 999].map((sky) =>
+    mapLoadingProgress({ ...input, sky }),
+  );
+  assert.ok(samples.every((value, i) => i === 0 || value > samples[i - 1]));
+});
 
 test("transient failures back off and stop after four failures for an immutable tile", () => {
   const policy = new SkyRequestPolicy();
@@ -102,9 +121,15 @@ test("worker RPC accepts out-of-order fetch responses and cancellation waits for
   const worker = workers[0];
   try {
     const controller = new AbortController();
-    const first = client.run({ type: "fetch" }, controller.signal);
+    const progress = [];
+    const first = client.run({ type: "fetch" }, controller.signal, (loaded) =>
+      progress.push(loaded),
+    );
     const second = client.run({ type: "fetch" }, new AbortController().signal);
     const [a, b] = worker.messages;
+    worker.onmessage({ data: { id: a.id, loaded: 128 } });
+    worker.onmessage({ data: { id: a.id, loaded: 256 } });
+    assert.deepEqual(progress, [128, 256]);
     worker.onmessage({ data: { id: b.id, result: "second" } });
     assert.equal(await second, "second");
     let settled = false;

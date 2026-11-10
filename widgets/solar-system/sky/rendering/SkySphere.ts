@@ -52,6 +52,8 @@ export class SkySphere {
   private disposed = false;
   compileMs: number | null = null;
   private warmDraw: { run(): void; cancel(): void } | null = null;
+  private targetZoneScale = 1;
+  private zoneUpdatedAt = performance.now();
   constructor(
     private renderer: WebGLRenderer,
     base: DataTexture,
@@ -86,8 +88,28 @@ export class SkySphere {
       renderer.getContext() as WebGL2RenderingContext,
       "draw",
     );
-    this.mesh.onBeforeRender = () => this.timer.begin();
+    this.mesh.onBeforeRender = () => {
+      const now = performance.now();
+      const elapsed = Math.min(0.1, (now - this.zoneUpdatedAt) / 1000);
+      this.zoneUpdatedAt = now;
+      const zone = this.material.uniforms.zoneScale;
+      zone.value +=
+        (this.targetZoneScale - zone.value) * (1 - Math.exp(-elapsed / 0.25));
+      const target = renderer.getRenderTarget();
+      this.material.uniforms.viewportSize.value.set(
+        target?.width ?? renderer.domElement.width,
+        target?.height ?? renderer.domElement.height,
+      );
+      this.timer.begin();
+    };
     this.mesh.onAfterRender = () => this.timer.end();
+  }
+
+  setDetailCapacity(tiles: number) {
+    this.targetZoneScale = Math.min(
+      1.3,
+      Math.max(0.65, Math.sqrt(Math.max(0, tiles) / 8)),
+    );
   }
 
   async warm(): Promise<WebGLSync> {

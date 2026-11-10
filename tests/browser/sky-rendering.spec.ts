@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { build } from "vite";
 import path from "node:path";
+import { writeFile } from "node:fs/promises";
 
 let probe: string;
 test.beforeAll(async () => {
@@ -64,6 +65,88 @@ test("GPU sky sampling feathers only missing coverage, preserves internal page j
   const physical = await run(false, true);
   expect(physical.failures).toEqual([]);
   expect(physical.joinMaxError).toBeLessThanOrEqual(1.1);
+});
+
+test("analytic sky projection agrees with camera rays at ordinary, oblique and polar angles", async ({
+  page,
+}, testInfo) => {
+  await page.goto("about:blank");
+  await page.addScriptTag({ content: probe });
+  const measurements = [];
+  for (const pitch of [0.2, 1, 1.56]) {
+    const result = await page.evaluate((pitch) => {
+      const api = (
+        window as unknown as {
+          SkyProbe: {
+            renderSphereProjectionProbe(
+              pitch: number,
+              yaw: number,
+            ): {
+              old: { rmse: number };
+              direction: { rmse: number };
+              failures: string[];
+            };
+          };
+        }
+      ).SkyProbe;
+      return api.renderSphereProjectionProbe(pitch, 0.4);
+    }, pitch);
+    measurements.push({ pitch, ...result });
+    expect(result.failures).toEqual([]);
+    expect(result.direction.rmse).toBeLessThan(0.002);
+    expect(result.direction.rmse).toBeLessThan(result.old.rmse);
+  }
+  await writeFile(
+    testInfo.outputPath("sphere-projection.json"),
+    JSON.stringify(measurements, null, 2),
+  );
+});
+
+test("minification filters the prepared 16K floor instead of replacing it with the base", async ({
+  page,
+}) => {
+  await page.goto("about:blank");
+  await page.addScriptTag({ content: probe });
+  const pixel = await page.evaluate(() =>
+    (
+      window as unknown as {
+        SkyProbe: { renderCoverageFloorProbe(): number[] };
+      }
+    ).SkyProbe.renderCoverageFloorProbe(),
+  );
+  expect(pixel).toEqual([255, 0, 0, 255]);
+  const fade = await page.evaluate(() =>
+    (
+      window as unknown as {
+        SkyProbe: {
+          renderCoverageFloorProbe(fov: undefined, fade: boolean): number[];
+        };
+      }
+    ).SkyProbe.renderCoverageFloorProbe(undefined, true),
+  );
+  expect(Math.abs(fade[0] - 127.5)).toBeLessThanOrEqual(0.5);
+  expect(Math.abs(fade[2] - 127.5)).toBeLessThanOrEqual(0.5);
+  expect([fade[1], fade[3]]).toEqual([0, 255]);
+});
+
+test("the sampler reads genuine 32K and 64K pages when their pixel footprints fit", async ({
+  page,
+}) => {
+  await page.goto("about:blank");
+  await page.addScriptTag({ content: probe });
+  const pixels = await page.evaluate(() => {
+    const api = (
+      window as unknown as {
+        SkyProbe: { renderCoverageFloorProbe(fov: number): number[] };
+      }
+    ).SkyProbe;
+    return [48, 8, 4].map((fov) => api.renderCoverageFloorProbe(fov));
+  });
+  expect(pixels[0].slice(0, 3)).toEqual([0, 0, 255]);
+  expect(pixels[1][1]).toBeGreaterThan(60);
+  expect(pixels[1][0]).toBe(0);
+  expect(pixels[2][0]).toBeGreaterThan(60);
+  expect(pixels[2][2]).toBe(0);
 });
 
 for (const viewport of [
@@ -178,7 +261,7 @@ for (const allowance of [512, 1024]) {
       ).__ORBITAL_MAP_RESOURCES__.snapshot(),
     );
     expect(resources.estimatedBytes).toBeLessThanOrEqual(resources.budgetBytes);
-    if (allowance === 1024) {
+    {
       await page
         .getByRole("button", { name: "Free flight", exact: true })
         .click();
@@ -243,6 +326,66 @@ test("startup keeps the loader until the initial whole-view detail is published"
       );
     })
     .toBe(true);
+});
+
+test("startup progress includes staged sky work after the models complete", async ({
+  page,
+}, testInfo) => {
+  test.setTimeout(120000);
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let held = 0;
+  await page.route("**/tiles/8k/**", async (route) => {
+    held++;
+    await gate;
+    await route.continue();
+  });
+  const samples: number[] = [];
+  await page.exposeFunction("recordStartupProgress", (value: number) =>
+    samples.push(value),
+  );
+  try {
+    await page.goto("/solar-system?lang=en&diagnostics=1&skyMemory=1024");
+    await expect.poll(() => held, { timeout: 30000 }).toBeGreaterThan(0);
+    await expect(page.locator("main")).toHaveAttribute(
+      "data-models-ready",
+      "17/17",
+    );
+    const progress = page.getByRole("progressbar");
+    const before = Number(await progress.getAttribute("aria-valuenow"));
+    expect(before).toBeGreaterThanOrEqual(20);
+    expect(before).toBeLessThan(60);
+    samples.push(before);
+    await progress.evaluate((element) => {
+      const record = () =>
+        (
+          window as unknown as { recordStartupProgress(value: number): void }
+        ).recordStartupProgress(Number(element.getAttribute("aria-valuenow")));
+      new MutationObserver(record).observe(element, {
+        attributes: true,
+        attributeFilter: ["aria-valuenow"],
+      });
+    });
+  } finally {
+    release();
+  }
+  await expect(page.locator("main")).toHaveAttribute(
+    "data-scene-ready",
+    "true",
+    { timeout: 90000 },
+  );
+  expect(
+    new Set(samples.filter((value) => value > 40 && value < 99)).size,
+  ).toBeGreaterThan(5);
+  expect(samples.every((value, i) => i === 0 || value >= samples[i - 1])).toBe(
+    true,
+  );
+  await writeFile(
+    testInfo.outputPath("startup-progress.json"),
+    JSON.stringify(samples),
+  );
 });
 
 test("a permanently missing initial tile finishes startup with the complete base", async ({

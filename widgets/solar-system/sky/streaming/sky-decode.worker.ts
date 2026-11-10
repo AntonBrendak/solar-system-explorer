@@ -21,7 +21,13 @@ scope.onmessage = async ({ data: job }) => {
   controllers.set(job.id, controller);
   try {
     if (job.type === "fetch") {
-      const blob = await fetchSkyAsset(job.url, job.asset, controller.signal);
+      const blob = await fetchSkyAsset(
+        job.url,
+        job.asset,
+        controller.signal,
+        undefined,
+        (loaded) => scope.postMessage({ id: job.id, loaded }),
+      );
       controller.signal.throwIfAborted();
       scope.postMessage({ id: job.id, result: blob });
     } else {

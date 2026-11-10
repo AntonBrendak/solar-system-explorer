@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { planetIds } from "@/entities/planet/types";
+import { mapLoadingProgress } from "./loading-progress";
 
 type SkyState = {
   uploaded: number;
@@ -14,7 +15,7 @@ type SkyState = {
 export function useMapReadiness() {
   const [sky, setSky] = useState<SkyState>({
     uploaded: 0,
-    total: 0,
+    total: 1000,
     ready: false,
     error: null,
   });
@@ -47,11 +48,11 @@ export function useMapReadiness() {
 
   const handleSkyProgress = useCallback((uploaded: number, total: number) => {
     setSky((previous) =>
-      previous.uploaded === uploaded && previous.total === total
+      previous.uploaded >= uploaded && previous.total === total
         ? previous
         : {
             ...previous,
-            uploaded,
+            uploaded: Math.max(previous.uploaded, uploaded),
             total,
           },
     );
@@ -88,20 +89,13 @@ export function useMapReadiness() {
     modelsReady &&
     (sky.ready || sky.error !== null);
   const completedSky = sky.error !== null ? sky.total : sky.uploaded;
-  const totalResources = sky.total + planetIds.length * 2 + 3;
-  const progress = sceneReady
-    ? 100
-    : Math.min(
-        99,
-        Math.floor(
-          ((completedSky +
-            readyModels.size +
-            Number(sunReady) +
-            Number(baseSkyReady)) /
-            totalResources) *
-            100,
-        ),
-      );
+  const progress = mapLoadingProgress({
+    models: readyModels.size + Number(sunReady),
+    modelTotal: planetIds.length * 2 + 2,
+    sky: completedSky,
+    skyTotal: sky.total,
+    ready: sceneReady,
+  });
 
   useEffect(() => {
     if (!sceneReady) return;

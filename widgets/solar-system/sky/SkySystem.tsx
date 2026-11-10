@@ -12,6 +12,7 @@ import type { SkyMetrics } from "./model/sky-types";
 type Props = {
   resourcesReady: boolean;
   onReady(): void;
+  onProgress(completed: number, total: number): void;
   onState(value: "ready" | "restoring" | "failed"): void;
   onMetrics(value: SkyMetrics): void;
 };
@@ -19,6 +20,7 @@ type Props = {
 export function SkySystem({
   resourcesReady,
   onReady,
+  onProgress,
   onState,
   onMetrics,
 }: Props) {
@@ -27,10 +29,10 @@ export function SkySystem({
   const root = useRef<Group>(null);
   const runtime = useRef<SkyTileScheduler | null>(null);
   const frames = useRef(0);
-  const callbacks = useRef({ onReady, onState, onMetrics });
+  const callbacks = useRef({ onReady, onProgress, onState, onMetrics });
   useEffect(() => {
-    callbacks.current = { onReady, onState, onMetrics };
-  }, [onReady, onState, onMetrics]);
+    callbacks.current = { onReady, onProgress, onState, onMetrics };
+  }, [onReady, onProgress, onState, onMetrics]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -54,7 +56,12 @@ export function SkySystem({
           resources,
           ++contextGeneration,
           {
-            ready: () => callbacks.current.onReady(),
+            ready: () => {
+              callbacks.current.onProgress(1000, 1000);
+              callbacks.current.onReady();
+            },
+            progress: (completed) =>
+              callbacks.current.onProgress(completed, 1000),
             state: (value) => callbacks.current.onState(value),
             metrics: (value) => {
               gl.domElement.dataset.skyStreaming = value.state;

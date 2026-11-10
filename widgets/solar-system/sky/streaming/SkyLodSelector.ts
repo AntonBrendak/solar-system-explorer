@@ -198,7 +198,18 @@ export class SkyLodSelector {
   }
   priority(region: SkyRegion) {
     this.cap(region, false);
-    return this.direction.dot(this.forward) + Number(this.aimed(region)) * 2;
+    const alignment = this.direction.dot(this.forward);
+    const beltEdge = Math.cos(this.viewHalfAngle * 0.7);
+    const belt = Math.max(
+      0,
+      (alignment - beltEdge) / Math.max(1e-6, 1 - beltEdge),
+    );
+    const aimBoost = region.level === 64 ? 0.4 : region.level === 32 ? 1.5 : 2;
+    return (
+      alignment +
+      Number(this.aimed(region)) * aimBoost +
+      (region.level === 32 ? belt * 1.25 : 0)
+    );
   }
   desiredLevel(
     camera: PerspectiveCamera,

@@ -15,7 +15,7 @@ export function SkyDiagnostics({
     ["Sky allowance", `${sample.capBytes / 1048576} MiB per CPU/GPU`],
     ["Allowance policy", sample.allocationMode],
     ["Quality limit", sample.blockedBy],
-    ["Camera-centre detail", `${sample.aimedLevel}K`],
+    ["Camera-centre resident", `${sample.aimedLevel}K`],
     [
       "Working / transition",
       `${(sample.workingBytes / 1048576).toFixed(1)} / ${(sample.transitionBytes / 1048576).toFixed(1)} MiB`,
@@ -30,7 +30,7 @@ export function SkyDiagnostics({
       `${sample.requirements.find((item) => item.level === 64)?.peakPages ?? "—"} pages including ancestors/transition`,
     ],
     [
-      "Visible detail",
+      "Highest resident LOD",
       sample.visibleLevel ? `${sample.visibleLevel}K` : "Base",
     ],
     ["Requests", String(sample.requests)],
@@ -65,6 +65,7 @@ export function SkyDiagnostics({
         ))}
       </dl>
       {sample.error && <small>{sample.error}</small>}
+      <small>Displayed detail also depends on screen-space filtering.</small>
     </section>
   );
 }

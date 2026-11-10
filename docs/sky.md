@@ -264,7 +264,7 @@ revisions also embed the result in their manifest.
 On 2026-11-10 all five adjacent pairs passed: 21,824 qualified stars, no
 unmatched stars and a maximum displacement of 0.114383 common-resolution
 pixels, below the 0.25-pixel limit. This is a spatially stratified measurement.
-See [validation](validation.md) for the execution matrix and limitations.
+The pinned report below records the measured samples and per-level errors.
 
 The separate command below decodes the existing WebP assets and compares
 adjacent 2K/4K/8K/16K/32K/64K levels on a common linear-luminance pixel grid:
@@ -293,6 +293,38 @@ Production asset rules include revisions and exclude the retired original
 tile pyramid; canonical source files remain available to local preparation.
 
 ## Acceptance checks
+
+### Image formation
+
+The sphere is a rasterisation proxy. Atlas coordinates are reconstructed per
+fragment from the local ray direction, avoiding vertex-UV distortion of star
+positions and shapes. GPU regression probes compare ordinary, oblique and polar
+views against an independent inverse-projection reference.
+
+The coherent coverage floor remains visible during minification. A continuous
+1-to-16-tap linear-light footprint filter samples it across page boundaries;
+quadrature weights change smoothly without a discrete tap-count brightness step.
+Higher detail uses registered adjacent pyramid levels according to pixel footprint.
+Screen-centred resolution zones inherit resident parents' coverage envelopes.
+Their radius follows the admitted viewport cache with 250 ms smoothing. Missing
+coverage is feathered over up to 96 screen pixels, capped at one eighth of a
+logical network tile so small detailed regions keep a fully sharp interior. Occupied neighbours
+at the same level have no feather. Longitude wraps and latitude clamps. Sampling
+and transitions stay linear, followed by the existing OutputPass.
+
+Startup prioritises the admitted central detail chain before peripheral upgrades.
+An aimed child can reclaim peripheral refinements while protecting its required
+parent and the coherent floor. Diagnostics distinguish resident LOD from the
+detail selected by screen-space filtering.
+
+Loading progress assigns 20% to the Sun/models/previews and 80% to Sky work.
+The latter includes streamed response bytes, decoding, confirmed GPU pages,
+page-table publication and real blend completion. Updates share the Sky frame
+deadline, are throttled, and remain monotonic. Only actual scene readiness permits
+100%; the loader still waits for every required preview. This measures completed
+work rather than predicting remaining download time.
+
+### Full-sphere acceptance
 
 1. Rotate continuously, across RA wrap and poles, with camera view offsets:
    useful requests survive view changes and downloads remain deduplicated.

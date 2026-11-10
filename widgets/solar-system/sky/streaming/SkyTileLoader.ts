@@ -30,6 +30,7 @@ type Request = {
   viewGeneration: number;
   blob?: Blob;
   blobReservation: number;
+  loadedBytes: number;
 };
 type MainJob = { run(): void; cancel(): void };
 type MainPreparation = {
@@ -88,6 +89,12 @@ export class SkyTileLoader {
   get networkInFlight() {
     return this.fetches;
   }
+  assetProgress(key: string) {
+    const request = this.requests.get(key);
+    if (this.cache.entries.has(key) || request?.state === "Decoded") return 1;
+    if (request?.blob) return 0.65;
+    return request ? (0.5 * request.loadedBytes) / request.asset.bytes : 0;
+  }
   unavailable(key: string) {
     return (
       this.policy.unavailable(key) ||
@@ -141,6 +148,7 @@ export class SkyTileLoader {
       wantedAt: now,
       viewGeneration,
       blobReservation: reservation,
+      loadedBytes: 0,
     };
     this.requests.set(key, request);
     this.fetches++;
@@ -154,6 +162,13 @@ export class SkyTileLoader {
 
   private async fetch(request: Request) {
     try {
+      const progress = (loaded: number) => {
+        if (!request.controller.signal.aborted && !this.disposed)
+          request.loadedBytes = Math.max(
+            request.loadedBytes,
+            Math.min(request.asset.bytes, loaded),
+          );
+      };
       const url = request.asset.path.startsWith("/")
         ? request.asset.path
         : `${atlasLock.root}/${request.asset.path}`;
@@ -161,12 +176,14 @@ export class SkyTileLoader {
         ? await this.worker.run<Blob>(
             { type: "fetch", url, asset: request.asset },
             request.controller.signal,
+            progress,
           )
         : await fetchSkyAsset(
             url,
             request.asset,
             request.controller.signal,
             (work) => this.scheduleMain(work, request.controller.signal),
+            progress,
           );
       if (request.controller.signal.aborted || this.disposed) {
         this.release(request);

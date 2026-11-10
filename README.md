@@ -83,8 +83,8 @@ python -m unittest discover -s scripts/star-atlas/tests -v
 npm run validate:sky-registration
 ```
 
-See [validation results and reproduction](docs/validation.md) for the test
-matrix, local Workers run and the measured Sky registration report.
+See [Sky validation](docs/sky.md#post-codec-stellar-registration) for the measured
+registration report, and [local Workers checks](docs/cloudflare.md) for runtime validation.
 
 Tests protect module boundaries, translation parity, scientific catalog values, recoverable weather failures, scene reuse, resource limits, placement, localization, history, accessibility and motion controls. Renderer measurements are regression checks; they do not establish performance on every GPU.
 

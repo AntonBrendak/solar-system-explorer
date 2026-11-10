@@ -7,6 +7,7 @@ type Reply = {
   error?: string;
   kind?: SkyFailureKind | "unsupported" | "cancelled";
   retryAfterMs?: number;
+  loaded?: number;
 };
 
 /** One worker, three concurrent fetches, one caller-controlled decode. Abort settles on worker acknowledgement. */
@@ -19,6 +20,7 @@ export class SkyWorkerClient {
       resolve(value: unknown): void;
       reject(error: Error): void;
       cleanup(): void;
+      progress?: (loaded: number) => void;
     }
   >();
   alive = true;
@@ -31,6 +33,10 @@ export class SkyWorkerClient {
     this.worker.onmessage = ({ data }: MessageEvent<Reply>) => {
       const job = this.pending.get(data.id);
       if (!job) return;
+      if (data.loaded !== undefined) {
+        job.progress?.(data.loaded);
+        return;
+      }
       this.pending.delete(data.id);
       job.cleanup();
       if (!data.error) job.resolve(data.result);
@@ -53,7 +59,11 @@ export class SkyWorkerClient {
       this.dispose(new SkyWorkerUnavailable("Sky worker message failed"));
   }
 
-  run<T>(message: object, signal: AbortSignal): Promise<T> {
+  run<T>(
+    message: object,
+    signal: AbortSignal,
+    progress?: (loaded: number) => void,
+  ): Promise<T> {
     if (!this.alive)
       return Promise.reject(
         new SkyWorkerUnavailable("Sky worker is unavailable"),
@@ -75,6 +85,7 @@ export class SkyWorkerClient {
       this.pending.set(id, {
         resolve: (value) => resolve(value as T),
         reject,
+        progress,
         cleanup: () => signal.removeEventListener("abort", abort),
       });
       try {

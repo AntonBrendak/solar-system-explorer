@@ -72,8 +72,8 @@ coordinator. Model presentation selects exactly one prepared layer per planet.
 Sky remains local to the map widget. It uses one sphere, spatial LOD groups,
 bounded worker requests, fenced uploads and a permanent fallback base. Its
 main allocation waits for initial model/preview leases and preserves room for
-Full-model transitions. See [Sky v2](sky.md) for its runtime and immutable
-release contracts, and [validation](validation.md) for measured evidence.
+Full-model transitions. See [Sky v2](sky.md) for its runtime, immutable release
+contracts and measured stellar registration evidence.
 
 ### Server weather
 

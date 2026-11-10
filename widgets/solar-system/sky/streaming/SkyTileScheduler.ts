@@ -59,6 +59,7 @@ type Callbacks = {
   ready(): void;
   state(value: "ready" | "restoring" | "failed"): void;
   metrics(value: SkyMetrics): void;
+  progress(completed: number): void;
 };
 
 /** Owns mutable runtime state. React sees startup/context events and one diagnostic sample per second. */
@@ -85,6 +86,8 @@ export class SkyTileScheduler {
   private detailLimit = 4;
   private coverageFade: { started: number } | null = null;
   private notified = false;
+  private startupProgress = 0;
+  private lastStartupProgress = 0;
   private bootstrapTarget = 4;
   private allocationPolicy: ReturnType<typeof skyResourcePolicy>;
   private policyReadyAt = performance.now() + 4000;
@@ -138,6 +141,8 @@ export class SkyTileScheduler {
     bootstrapBlockedAt: number;
     best: LodTransitionGroup | null;
     priority: number;
+    aimHeadroom: number;
+    capacityBlocked: boolean;
   } | null = null;
   private warmRequested = false;
   private warmStarted = 0;
@@ -239,15 +244,12 @@ export class SkyTileScheduler {
     resourcesReady = true,
   ) {
     const started = performance.now();
+    const deadline = started + MAIN_THREAD_MS;
     try {
-      this.tickFrame(
-        camera,
-        pixelHeight,
-        now,
-        started + MAIN_THREAD_MS,
-        resourcesReady,
-      );
+      this.tickFrame(camera, pixelHeight, now, deadline, resourcesReady);
     } finally {
+      if (performance.now() < deadline)
+        this.reportStartupProgress(performance.now(), deadline);
       this.cpuPeakMs = Math.max(this.cpuPeakMs, performance.now() - started);
     }
   }
@@ -848,6 +850,9 @@ export class SkyTileScheduler {
       if (!plan) return false;
       this.coverageTarget = plan.coverage;
       this.coverageBudget = plan.budget;
+      this.sphere!.setDetailCapacity(
+        plan.budget.cachePages / Math.max(1, plan.budget.transitionPages),
+      );
       this.requirements = plan.requirements;
       this.selectionScan = {
         leaves: this.regions,
@@ -859,6 +864,15 @@ export class SkyTileScheduler {
         bootstrapBlockedAt: Infinity,
         best: null,
         priority: -Infinity,
+        capacityBlocked: false,
+        aimHeadroom:
+          (2048 / pool.core) ** 2 *
+          Math.max(
+            0,
+            Math.log2(
+              plan.refinement / Math.max(plan.coverage, this.aimedLevel()),
+            ),
+          ),
       };
     }
     const scan = this.selectionScan;
@@ -889,6 +903,21 @@ export class SkyTileScheduler {
       }
       const candidate = describeGroup(leaf);
       if (
+        leaf.level > scan.plan.coverage &&
+        !this.selector.aimed(leaf) &&
+        scan.aimHeadroom > 0
+      ) {
+        const pagesPerTile = (2048 / pool.core) ** 2;
+        // A broad 32K belt must not consume the last slots needed by the central detail chain.
+        if (
+          pool.free <
+          pagesPerTile + scan.plan.budget.transitionPages + scan.aimHeadroom
+        ) {
+          scan.capacityBlocked = true;
+          continue;
+        }
+      }
+      if (
         candidate.tiles.some((tile) =>
           this.loader.unavailable(tileKey(tile)),
         ) ||
@@ -906,7 +935,9 @@ export class SkyTileScheduler {
           );
         continue;
       }
-      const priority = this.selector.priority(candidate.region);
+      const priority =
+        this.selector.priority(candidate.region) +
+        Number(!this.notified && this.selector.aimed(candidate.region)) * 4;
       const best = scan.best;
       const floor = Math.max(8, scan.plan.coverage);
       const category = (item: LodTransitionGroup) =>
@@ -927,6 +958,7 @@ export class SkyTileScheduler {
     if (scan.cursor < scan.leaves.length || performance.now() >= deadline)
       return false;
     this.coverageReady = scan.coverageReady;
+    const nextFloor = Math.max(8, this.coverageReady);
     this.coverageTarget = Math.min(scan.plan.coverage, scan.blockedAt / 2);
     this.bootstrapTarget = Math.min(
       this.bootstrapTarget,
@@ -937,8 +969,13 @@ export class SkyTileScheduler {
       this.coverageReady >= this.coverageTarget
         ? scan.plan.refinement
         : this.coverageReady;
-    if (displayLimit !== this.detailLimit) {
+    if (
+      displayLimit !== this.detailLimit ||
+      nextFloor !== this.sphere!.material.uniforms.coverageFloor.value
+    ) {
       const uniforms = this.sphere!.material.uniforms;
+      uniforms.previousCoverageFloor.value = uniforms.coverageFloor.value;
+      uniforms.coverageFloor.value = nextFloor;
       uniforms.previousDetailLimit.value = this.detailLimit;
       this.detailLimit = displayLimit;
       uniforms.detailLimit.value = this.detailLimit;
@@ -966,7 +1003,9 @@ export class SkyTileScheduler {
     }
     const candidate = scan.best;
     if (!candidate || !this.groupUseful(candidate)) {
-      this.blockedBy = "Screen-space quality target";
+      this.blockedBy = scan.capacityBlocked
+        ? "Transition headroom"
+        : "Screen-space quality target";
       this.selectionScan = null;
       return true;
     }
@@ -1031,6 +1070,7 @@ export class SkyTileScheduler {
             !contains(slot.page.tile, candidate.region) &&
             !this.selector.aimed(slot.page.tile) &&
             (candidate.target <= scan.plan.coverage ||
+              this.selector.aimed(candidate.region) ||
               this.selector.priority(slot.page.tile) + 0.02 <
                 this.selector.priority(candidate.region)),
         );
@@ -1168,6 +1208,100 @@ export class SkyTileScheduler {
     this.table = null;
     this.pool = null;
     this.shown = [];
+  }
+
+  private reportStartupProgress(now: number, deadline: number) {
+    if (this.notified || this.disposed || now - this.lastStartupProgress < 200)
+      return;
+    const reserve = this.reserve
+      ? 1
+      : this.loader.assetProgress("reserve") * 0.8;
+    const base = this.base ? 1 : this.loader.assetProgress(this.baseKey) * 0.8;
+    const shader = this.ready ? 1 : this.warming ? 0.25 : 0;
+    let fraction = 0.2 * (reserve * 0.15 + base * 0.45 + shader * 0.4);
+    if (this.pool && this.coverageBudget) {
+      const pagesPerTile = (2048 / this.pool.core) ** 2;
+      const working = Math.max(
+        0,
+        (this.requirements.find((item) => item.level === this.coverageTarget)
+          ?.peakPages ?? pagesPerTile) - pagesPerTile,
+      );
+      const aimPages =
+        pagesPerTile *
+        Math.max(
+          0,
+          Math.log2(this.bootstrapTarget / Math.max(4, this.coverageTarget)),
+        );
+      const credits = [0, 0];
+      const pending = new Map<string, number>();
+      const visible = new Set(this.shown);
+      const kind = (region: SkyRegion) => {
+        if (
+          region.level <= this.coverageTarget &&
+          this.selector.useful(region, false)
+        )
+          return 0;
+        if (
+          region.level > this.coverageTarget &&
+          region.level <= this.bootstrapTarget &&
+          this.selector.aimed(region)
+        )
+          return 1;
+        return -1;
+      };
+      for (const [key, request] of this.loader.requests) {
+        if (performance.now() >= deadline) return;
+        const [level, row, column] = key.split("/").map(Number);
+        if (
+          ![8, 16, 32, 64].includes(level) ||
+          ["Failed", "Cancelled"].includes(request.state)
+        )
+          continue;
+        const category = kind({ level, row, column } as SkyRegion);
+        if (category < 0) continue;
+        const credit = 0.45 * this.loader.assetProgress(key);
+        pending.set(key, credit);
+        credits[category] += pagesPerTile * credit;
+      }
+      for (const slot of this.pool.slots) {
+        if (performance.now() >= deadline) return;
+        if (!slot.page || ["Free", "Retiring", "Failed"].includes(slot.state))
+          continue;
+        const category = kind(slot.page.tile);
+        if (category < 0) continue;
+        const prior = pending.get(slot.page.tile.id) ?? 0;
+        const credit = visible.has(slot)
+          ? 1
+          : slot.state === "Published"
+            ? 0.8 + 0.2 * this.sphere!.material.uniforms.transition.value
+            : slot.state === "GPU uploaded"
+              ? 0.8
+              : 0.55;
+        credits[category] += Math.max(0, credit - prior);
+      }
+      const coverage = working ? Math.min(1, credits[0] / working) : 1;
+      const aim = aimPages ? Math.min(1, credits[1] / aimPages) : coverage;
+      const publication = this.coverageFade
+        ? this.sphere!.material.uniforms.coverageBlend.value
+        : this.transition?.phase === "blend"
+          ? this.sphere!.material.uniforms.transition.value
+          : this.transition
+            ? 0
+            : 1;
+      fraction +=
+        0.6 * coverage +
+        0.17 * aim +
+        0.03 * Math.min(coverage, aim, publication);
+    }
+    const completed = Math.min(
+      999,
+      Math.max(this.startupProgress, Math.floor(fraction * 1000)),
+    );
+    this.lastStartupProgress = now;
+    if (completed !== this.startupProgress) {
+      this.startupProgress = completed;
+      this.callbacks.progress(completed);
+    }
   }
 
   private diagnostics(now: number) {

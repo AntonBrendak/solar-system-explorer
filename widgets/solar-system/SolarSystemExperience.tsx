@@ -81,6 +81,7 @@ function MapExperience() {
     handlePreviewReady,
     handlePreviewError,
     handleSkyReady,
+    handleSkyProgress,
     handleSunReady,
   } = useMapReadiness();
 
@@ -243,6 +244,7 @@ function MapExperience() {
                   sunReady && readyModels.size === planetIds.length * 2 + 1
                 }
                 onReady={handleSkyPrepared}
+                onProgress={handleSkyProgress}
                 onState={setSkyState}
                 onMetrics={performanceStore.publishSky}
               />
