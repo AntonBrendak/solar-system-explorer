@@ -102,6 +102,10 @@ admitted camera-centre detail. Both 512 and explicit 1024 MiB cases reached
 complete 16K coverage with local 64K before entry, within the combined allowance.
 The final Workers build also restored this coverage and its 1024 MiB allowance
 after a forced main-context loss, with HTML coverage and home navigation during recovery.
+After reserving capacity for the next viewport level, all nine Sky cases passed
+again. The 1024 MiB case additionally retained complete 16K coverage and rebuilt
+64K at the camera centre after a large turn; the combined-budget model transition
+case also passed with the larger cache.
 The physical-join shader probe matches a continuous bilinear reference within
 one RGBA8 step, including a star-like peak straddling the page boundary.
 Two concurrent test runners initially collided in Playwright's shared trace

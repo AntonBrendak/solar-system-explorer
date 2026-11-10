@@ -185,7 +185,10 @@ independent of another scene component's FPS.
 Physical pool capacity derives from this viewport's selected working set,
 one transition tile and a bounded refinement/look-ahead cache: the larger of two
 network tiles and 25% of the working set, clamped by available headroom and both memory
-ledgers and the shared map allowance. Offscreen residency follows the current
+ledgers and the shared map allowance.
+The capacity also anticipates the next whole-view level's page peak, within
+the same hard admission limits; free bytes must not be stranded behind a pool
+sized only for the already-published level. Offscreen residency follows the current
 viewport cache target; it cannot consume transition slots. The array does not
 grow by probing available memory, and no second full backing array is created
 during an active replacement. The larger profile is admitted before the first

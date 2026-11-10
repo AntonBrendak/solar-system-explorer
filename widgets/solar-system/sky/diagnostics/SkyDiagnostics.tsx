@@ -15,6 +15,7 @@ export function SkyDiagnostics({
     ["Sky allowance", `${sample.capBytes / 1048576} MiB per CPU/GPU`],
     ["Allowance policy", sample.allocationMode],
     ["Quality limit", sample.blockedBy],
+    ["Camera-centre detail", `${sample.aimedLevel}K`],
     [
       "Working / transition",
       `${(sample.workingBytes / 1048576).toFixed(1)} / ${(sample.transitionBytes / 1048576).toFixed(1)} MiB`,

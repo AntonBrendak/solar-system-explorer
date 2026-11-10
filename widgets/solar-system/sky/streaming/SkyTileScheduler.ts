@@ -1209,6 +1209,7 @@ export class SkyTileScheduler {
       requirements: this.requirements,
       slots: this.pool?.slots.length ?? 0,
       used: this.pool ? this.pool.slots.length - this.pool.free : 0,
+      aimedLevel: this.aimedLevel(),
       visibleLevel: Math.max(
         0,
         ...this.shown.map((slot) => {

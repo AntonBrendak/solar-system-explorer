@@ -58,6 +58,7 @@ export type SkyMetrics = {
   cachePages: number;
   requirements: { level: DetailLevel; pages: number; peakPages: number }[];
   visibleLevel: number;
+  aimedLevel: number;
   requests: number;
   viewGeneration: number;
   uploadMs: number;

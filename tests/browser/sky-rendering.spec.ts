@@ -166,7 +166,7 @@ for (const allowance of [512, 1024]) {
       .poll(async () => Number(await canvas.getAttribute("data-sky-coverage")))
       .toBeGreaterThanOrEqual(16);
     await expect
-      .poll(async () => Number(await canvas.getAttribute("data-sky-level")))
+      .poll(async () => Number(await canvas.getAttribute("data-sky-aim")))
       .toBe(64);
     const resources = await page.evaluate(() =>
       (
@@ -178,6 +178,28 @@ for (const allowance of [512, 1024]) {
       ).__ORBITAL_MAP_RESOURCES__.snapshot(),
     );
     expect(resources.estimatedBytes).toBeLessThanOrEqual(resources.budgetBytes);
+    if (allowance === 1024) {
+      await page
+        .getByRole("button", { name: "Free flight", exact: true })
+        .click();
+      await page.mouse.move(900, 400);
+      await page.mouse.down({ button: "right" });
+      await page.mouse.move(1300, 550, { steps: 30 });
+      await page.mouse.up({ button: "right" });
+      // Observe a fresh diagnostic sample after camera damping and the one-second publisher.
+      await page.waitForTimeout(1500);
+      await expect
+        .poll(
+          async () => Number(await canvas.getAttribute("data-sky-coverage")),
+          { timeout: 90000 },
+        )
+        .toBeGreaterThanOrEqual(16);
+      await expect
+        .poll(async () => Number(await canvas.getAttribute("data-sky-aim")), {
+          timeout: 45000,
+        })
+        .toBe(64);
+    }
   });
 }
 
@@ -270,6 +292,6 @@ test("context recovery retains the admitted allowance and rebuilds complete cove
     .poll(async () => Number(await canvas.getAttribute("data-sky-coverage")))
     .toBeGreaterThanOrEqual(16);
   await expect
-    .poll(async () => Number(await canvas.getAttribute("data-sky-level")))
+    .poll(async () => Number(await canvas.getAttribute("data-sky-aim")))
     .toBe(64);
 });

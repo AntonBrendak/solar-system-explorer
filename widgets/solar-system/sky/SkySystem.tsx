@@ -63,6 +63,7 @@ export function SkySystem({
               gl.domElement.dataset.skyPages = String(value.used);
               gl.domElement.dataset.skySlots = String(value.slots);
               gl.domElement.dataset.skyLevel = String(value.visibleLevel);
+              gl.domElement.dataset.skyAim = String(value.aimedLevel);
               gl.domElement.dataset.skyCoverage = String(value.coverageReady);
               gl.domElement.dataset.skyTarget = String(value.coverageTarget);
               gl.domElement.dataset.skyCap = String(value.capBytes);

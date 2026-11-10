@@ -23,15 +23,25 @@ export function viewportCoverageBudget(input: {
       workingPages = item.peakPages - transitionPages;
     }
   }
-  const cachePages = Math.max(
+  const lookAheadPages = Math.max(
     0,
     Math.min(
       Math.max(2 * transitionPages, Math.ceil(workingPages / 4)),
       input.maxPages - workingPages - transitionPages,
     ),
   );
+  const next = input.requirements.find((item) => item.level === coverage * 2);
   const capacity =
-    coverage === 4 ? 0 : workingPages + transitionPages + cachePages;
+    coverage === 4
+      ? 0
+      : Math.min(
+          input.maxPages,
+          Math.max(
+            workingPages + transitionPages + lookAheadPages,
+            next?.peakPages ?? 0,
+          ),
+        );
+  const cachePages = Math.max(0, capacity - workingPages - transitionPages);
   return {
     coverage,
     workingPages,

@@ -228,6 +228,10 @@ test("viewport capacity scales with the visible working set and keeps transition
     );
     assert.ok(plan.budget.transitionPages > 0);
     assert.ok(plan.budget.capacity <= 200);
+    const next = plan.requirements.find(
+      (item) => item.level === plan.coverage * 2,
+    );
+    if (next) assert.ok(plan.budget.capacity >= Math.min(200, next.peakPages));
   }
   const constrained = viewportCoverageBudget({
     requirements: wide.requirements,
