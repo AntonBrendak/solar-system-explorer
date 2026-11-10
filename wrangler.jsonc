@@ -3,6 +3,7 @@
   "name": "orbital-observatory",
   "compatibility_date": "2026-10-29",
   "compatibility_flags": ["nodejs_compat"],
+  "upload_source_maps": false,
   "main": "vinext/server/fetch-handler",
   "assets": {
     "directory": "dist/client",

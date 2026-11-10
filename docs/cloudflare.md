@@ -16,6 +16,11 @@ npm run deploy:vinext
 
 Authenticate with `npx wrangler login` before the first deployment. The Worker name and bindings are defined in `wrangler.jsonc`; deployment uses the generated `dist/server/wrangler.json`. Wrangler may provision the declared KV namespace on the first deployment. Never commit OAuth credentials, API tokens or local Wrangler state.
 
+The Worker explicitly sets `upload_source_maps: false`. This build's encoded
+RSC/SSR maps exceed Cloudflare's [60 MiB source-map limit](https://developers.cloudflare.com/workers/observability/source-maps/).
+Production errors therefore retain compiled stack locations without Cloudflare
+source-map remapping. The setting is preserved in the generated deployment config.
+
 ## Runtime configuration
 
 - `ASSETS` serves the compiled client, fonts, posters, share artwork and sized texture maps.
