@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -57,6 +57,18 @@ test("the build gate accepts a complete certified revision and rejects altered o
   const valid = run();
   assert.equal(valid.status, 0, valid.stderr);
   assert.match(valid.stdout, /complete/);
+
+  const locked = JSON.parse(
+    await readFile(path.join(modelRoot, "sky-atlas.lock.json"), "utf8"),
+  );
+  await writeFile(
+    path.join(modelRoot, "sky-atlas.lock.json"),
+    JSON.stringify({ ...locked, schema: 2 }),
+  );
+  const missingCoverage = run();
+  assert.notEqual(missingCoverage.status, 0);
+  assert.match(missingCoverage.stderr, /coverage supplement is not pinned/);
+  await save(original);
 
   await writeFile(
     path.join(modelRoot, "sky-registration.json"),

@@ -1,7 +1,8 @@
 "use client";
 
-import { useContext, useEffect, useRef } from "react";
+import { useContext, useEffect, useRef, useSyncExternalStore } from "react";
 import { GpuResourceContext } from "@/shared/lib/gpu-resource-context";
+import { textureAllocationBytes } from "@/shared/lib/gpu-resource-budget";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Vector2 } from "three";
 
@@ -13,6 +14,8 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 const BLOOM_STRENGTH = 0.95;
 const BLOOM_THRESHOLD = 1.05;
 const BLOOM_RADIUS = 0.5;
+const defaultBudget = () => 768 * 1048576;
+const unobserved = () => () => {};
 
 export function SunBloom() {
   const { gl, scene, camera, size, viewport } = useThree();
@@ -20,12 +23,14 @@ export function SunBloom() {
   const composerRef = useRef<EffectComposer | null>(null);
   const bloomRef = useRef<UnrealBloomPass | null>(null);
   const resources = useContext(GpuResourceContext);
+  const budget = useSyncExternalStore(
+    resources?.subscribeBudget ?? unobserved,
+    resources?.getBudget ?? defaultBudget,
+    defaultBudget,
+  );
 
   useEffect(() => {
     const composer = new EffectComposer(gl);
-    const samples = Math.min(4, gl.capabilities.maxSamples);
-    composer.renderTarget1.samples = samples;
-    composer.renderTarget2.samples = samples;
 
     const bloom = new UnrealBloomPass(
       new Vector2(1, 1),
@@ -77,6 +82,37 @@ export function SunBloom() {
           ]
         : []),
     ];
+    const primary = new Set([composer.renderTarget1, composer.renderTarget2]);
+    const storage = (samples: number) =>
+      targets.reduce(
+        (sum, target) =>
+          sum +
+          textureAllocationBytes(target.texture) +
+          target.width *
+            target.height *
+            ((primary.has(target) ? samples : target.samples) *
+              (8 + (target.depthBuffer ? 4 : 0)) +
+              (target.depthBuffer ? 4 : 0)),
+        0,
+      );
+    const allowance = Math.min(192 * 1048576, budget / 4);
+    let samples = Math.min(4, gl.capabilities.maxSamples);
+    if (storage(samples) > Math.min(96 * 1048576, budget / 8)) samples = 0;
+    if (storage(0) > allowance) {
+      composer.setPixelRatio(
+        viewport.dpr * Math.sqrt(allowance / storage(0)) * 0.98,
+      );
+    }
+    for (const target of primary) {
+      if (target.samples !== samples) {
+        target.dispose();
+        target.samples = samples;
+      }
+    }
+    gl.domElement.setAttribute(
+      "data-postprocessing-bytes",
+      String(storage(samples)),
+    );
     // Include multisampled colour/depth storage as well as the resolved textures.
     const extraBytes = targets.reduce(
       (sum, target) =>
@@ -97,7 +133,7 @@ export function SunBloom() {
         extraBytes,
       },
     );
-  }, [size.width, size.height, viewport.dpr, gl, resources]);
+  }, [size.width, size.height, viewport.dpr, gl, resources, budget]);
 
   useFrame((state, delta) => {
     const composer = composerRef.current;

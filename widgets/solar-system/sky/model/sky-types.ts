@@ -1,5 +1,5 @@
-export type SkyLevel = 8 | 16 | 32 | 64;
-export type DetailLevel = Exclude<SkyLevel, 8>;
+export type SkyLevel = 4 | 8 | 16 | 32 | 64;
+export type DetailLevel = Exclude<SkyLevel, 4>;
 export type PageCore = 1024 | 512 | 256;
 export type TileState =
   | "Requested"
@@ -48,6 +48,16 @@ export type SkyMetrics = {
   gpuBytes: number;
   slots: number;
   used: number;
+  capBytes: number;
+  blockedBy: string;
+  allocationMode: string;
+  coverageTarget: number;
+  coverageReady: number;
+  workingBytes: number;
+  transitionBytes: number;
+  cachePages: number;
+  requirements: { level: DetailLevel; pages: number; peakPages: number }[];
+  visibleLevel: number;
   requests: number;
   viewGeneration: number;
   uploadMs: number;

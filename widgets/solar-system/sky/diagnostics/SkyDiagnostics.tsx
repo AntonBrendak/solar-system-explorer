@@ -12,6 +12,26 @@ export function SkyDiagnostics({
     ["CPU + reserve", `${(sample.cpuBytes / 1048576).toFixed(1)} MiB`],
     ["GPU + reserve", `${(sample.gpuBytes / 1048576).toFixed(1)} MiB`],
     ["Pages", `${sample.used} / ${sample.slots}`],
+    ["Sky allowance", `${sample.capBytes / 1048576} MiB per CPU/GPU`],
+    ["Allowance policy", sample.allocationMode],
+    ["Quality limit", sample.blockedBy],
+    [
+      "Working / transition",
+      `${(sample.workingBytes / 1048576).toFixed(1)} / ${(sample.transitionBytes / 1048576).toFixed(1)} MiB`,
+    ],
+    ["Viewport cache", `${sample.cachePages} pages`],
+    [
+      "Coverage ready / target",
+      `${sample.coverageReady}K / ${sample.coverageTarget}K`,
+    ],
+    [
+      "64K coverage peak",
+      `${sample.requirements.find((item) => item.level === 64)?.peakPages ?? "—"} pages including ancestors/transition`,
+    ],
+    [
+      "Visible detail",
+      sample.visibleLevel ? `${sample.visibleLevel}K` : "Base",
+    ],
     ["Requests", String(sample.requests)],
     ["View generation", String(sample.viewGeneration)],
     ["Upload CPU", `${sample.uploadMs.toFixed(2)} ms`],

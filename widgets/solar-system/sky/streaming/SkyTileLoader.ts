@@ -1,4 +1,4 @@
-import { CANCEL_GRACE_MS, DECODE_PEAK, SKY_USABLE } from "../model/sky-config";
+import { CANCEL_GRACE_MS } from "../model/sky-config";
 import {
   atlasLock,
   type SkyManifest,
@@ -44,6 +44,7 @@ export class SkyTileLoader {
   readonly requests = new Map<string, Request>();
   readonly policy = new SkyRequestPolicy();
   error: string | null = null;
+  blockedBy: string | null = null;
   private worker: SkyWorkerClient | null = null;
   private workerDecode = true;
   private decoding = false;
@@ -114,14 +115,24 @@ export class SkyTileLoader {
     if (this.fetches >= 3 || !this.policy.canRequest(key, now)) return;
     const asset = this.manifest.files[key];
     if (!asset) return;
-    const decodePeak = Math.min(DECODE_PEAK, asset.width * asset.height * 12);
-    if (this.memory.bytes + asset.bytes * 2 + decodePeak > SKY_USABLE) {
+    const decodePeak = asset.width * asset.height * 12;
+    if (this.memory.bytes + asset.bytes * 2 + decodePeak > this.memory.limit) {
       this.cache.trim(this.protectedKeys, 0);
-      if (this.memory.bytes + asset.bytes * 2 + decodePeak > SKY_USABLE) return;
+      if (
+        this.memory.bytes + asset.bytes * 2 + decodePeak >
+        this.memory.limit
+      ) {
+        this.blockedBy = "Blocked by CPU budget";
+        return;
+      }
     }
     if (performance.now() >= deadline) return;
     const reservation = this.memory.reserve(asset.bytes * 2, `fetch:${key}`);
-    if (reservation === null) return;
+    if (reservation === null) {
+      this.blockedBy = "Blocked by CPU budget";
+      return;
+    }
+    this.blockedBy = null;
     const request: Request = {
       key,
       asset,
@@ -143,7 +154,9 @@ export class SkyTileLoader {
 
   private async fetch(request: Request) {
     try {
-      const url = `${atlasLock.root}/${request.asset.path}`;
+      const url = request.asset.path.startsWith("/")
+        ? request.asset.path
+        : `${atlasLock.root}/${request.asset.path}`;
       const blob = this.worker?.alive
         ? await this.worker.run<Blob>(
             { type: "fetch", url, asset: request.asset },
@@ -225,9 +238,11 @@ export class SkyTileLoader {
       `decode:${request.key}`,
     );
     if (reservation === null) {
+      this.blockedBy = "Blocked by CPU budget";
       this.cache.trim(useful, 0);
       return;
     }
+    this.blockedBy = null;
     this.decoding = true;
     this.decodingRequest = request;
     let retryOnMain = false;

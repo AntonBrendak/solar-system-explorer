@@ -1,4 +1,5 @@
 import lock from "./sky-atlas.lock.json";
+import coverage from "./sky-coverage.lock.json";
 import type { NetworkTile } from "./sky-types";
 
 export type SkyAsset = {
@@ -82,6 +83,14 @@ export async function loadManifest(signal: AbortSignal): Promise<SkyManifest> {
   }
   if (required.some((key) => !manifest.files[key]))
     throw new Error("Incomplete Sky revision");
+  if (
+    coverage.parameters.parentRevision !== manifest.revision ||
+    !coverage.validation.decodedPixelsMatchSource
+  )
+    throw new Error("Incompatible Sky coverage supplement");
+  for (const [key, asset] of Object.entries(coverage.files))
+    manifest.files[key] = { ...asset, path: `${coverage.root}/${asset.path}` };
+  manifest.revision += `:${coverage.revision}`;
   return manifest;
 }
 export function tileKey(tile: NetworkTile) {

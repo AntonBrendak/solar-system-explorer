@@ -58,8 +58,15 @@ export class SkyGpuPool {
     const reservation = memory.reserve(this.bytes, "array-backing");
     if (reservation === null) throw new Error("Sky CPU pool budget exceeded");
     this.reservation = reservation;
+    let backing: Uint8Array;
+    try {
+      backing = new Uint8Array(this.bytes);
+    } catch (error) {
+      memory.release(reservation);
+      throw error;
+    }
     this.texture = new DataArrayTexture(
-      new Uint8Array(this.bytes),
+      backing,
       physical(core),
       physical(core),
       count,

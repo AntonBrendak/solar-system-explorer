@@ -9,6 +9,7 @@ import {
 import type { GpuResourceBudget } from "@/shared/lib/gpu-resource-budget";
 import {
   baseBytes,
+  chooseBaseSize,
   BLEND_MS,
   DECODE_PEAK,
   IDLE_MS,
@@ -17,10 +18,10 @@ import {
   PAGE_PROFILES,
   pageBytes,
   physical,
-  SKY_RESERVE,
-  SKY_USABLE,
+  SKY_CAP,
 } from "../model/sky-config";
 import { type SkyManifest, tileKey } from "../model/sky-manifest";
+import { skyResourcePolicy } from "../model/sky-resource-policy";
 import type {
   GpuPage,
   LodTransitionGroup,
@@ -33,6 +34,7 @@ import { SkyPageTable } from "../rendering/SkyPageTable";
 import { SkyMemory } from "./SkyMemory";
 import { SkyTileLoader } from "./SkyTileLoader";
 import { SkyGpuPool, type SkySlot } from "./SkyGpuPool";
+import { viewportCoverageBudget } from "./ViewportCoverageBudget";
 import {
   contains,
   regionKey,
@@ -40,7 +42,7 @@ import {
   appendGroupPages,
   type SkyLodPlan,
   SkyLodSelector,
-  virtualRegions,
+  detailRegions,
 } from "./SkyLodSelector";
 
 type Transition = {
@@ -50,6 +52,9 @@ type Transition = {
   phase: "table" | "blend";
   started: number;
 };
+
+const resident = (slot: SkySlot | undefined): slot is SkySlot =>
+  !!slot && ["GPU uploaded", "Published", "Visible"].includes(slot.state);
 type Callbacks = {
   ready(): void;
   state(value: "ready" | "restoring" | "failed"): void;
@@ -59,7 +64,9 @@ type Callbacks = {
 /** Owns mutable runtime state. React sees startup/context events and one diagnostic sample per second. */
 export class SkyTileScheduler {
   readonly cpu: SkyMemory;
-  readonly gpu = new SkyMemory();
+  readonly gpu: SkyMemory;
+  private reserveBytes: number;
+  private capBytes: number;
   readonly loader: SkyTileLoader;
   private sphere: SkySphere | null = null;
   private reserve: DataTexture | null = null;
@@ -71,7 +78,20 @@ export class SkyTileScheduler {
   private group: LodTransitionGroup | null = null;
   private transition: Transition | null = null;
   private selector = new SkyLodSelector();
-  private leaves: SkyRegion[] = virtualRegions();
+  private regions: SkyRegion[] = detailRegions();
+  private coverageTarget = 4;
+  private coverageBudget: ReturnType<typeof viewportCoverageBudget> | null =
+    null;
+  private detailLimit = 4;
+  private coverageFade: { started: number } | null = null;
+  private notified = false;
+  private bootstrapTarget = 4;
+  private allocationPolicy: ReturnType<typeof skyResourcePolicy>;
+  private policyReadyAt = performance.now() + 4000;
+  private policyApplied = false;
+  private blockedBy = "Preparing initial coverage";
+  private coverageReady = 4;
+  private requirements: SkyLodPlan["requirements"] = [];
   private matrix = new Matrix4();
   private previousView = new Matrix4();
   private previousCamera = new Matrix4();
@@ -95,7 +115,7 @@ export class SkyTileScheduler {
   private leases = new Map<object, number>();
   private safetyOwner = {};
   private baseSize = 0;
-  private baseLimit = 8192;
+  private baseLimit = 4096;
   private baseSourceFence: WebGLSync | null = null;
   private compressedHeadroom: number;
   private baseRetirement: {
@@ -105,6 +125,7 @@ export class SkyTileScheduler {
   } | null = null;
   private nextProfile = 0;
   private lastPoolAttempt = -Infinity;
+  private poolCeiling = Infinity;
   private error: string | null = null;
   private lastUseful = new Map<string, number>();
   private selectionScan: {
@@ -112,7 +133,9 @@ export class SkyTileScheduler {
     core: PageCore;
     plan: SkyLodPlan;
     cursor: number;
-    coarse: Set<string>;
+    coverageReady: number;
+    blockedAt: number;
+    bootstrapBlockedAt: number;
     best: LodTransitionGroup | null;
     priority: number;
   } | null = null;
@@ -128,16 +151,39 @@ export class SkyTileScheduler {
     private resources: GpuResourceBudget | null,
     private contextGeneration: number,
     private callbacks: Callbacks,
-    retained?: { cpu: SkyMemory; loader: SkyTileLoader },
+    retained?: { cpu: SkyMemory; loader: SkyTileLoader; capBytes?: number },
   ) {
-    this.cpu = retained?.cpu ?? new SkyMemory();
     const context = renderer.getContext() as WebGL2RenderingContext;
     if (!context.fenceSync) throw new Error("Sky requires WebGL2");
+    const device = navigator as Navigator & {
+      deviceMemory?: number;
+      connection?: { saveData?: boolean };
+    };
+    const query = new URLSearchParams(location.search);
+    this.allocationPolicy = skyResourcePolicy({
+      memory: device.deviceMemory,
+      cores: device.hardwareConcurrency,
+      saveData: !!device.connection?.saveData,
+      maxTextureSize: renderer.capabilities.maxTextureSize,
+      maxArrayLayers: context.getParameter(context.MAX_ARRAY_TEXTURE_LAYERS),
+      experimentalMiB: query.has("diagnostics")
+        ? Number(query.get("skyMemory"))
+        : undefined,
+    });
+    this.capBytes = retained?.capBytes ?? SKY_CAP;
+    this.reserveBytes = Math.ceil(this.capBytes * 0.15);
+    const usable = this.capBytes - this.reserveBytes;
+    if (this.capBytes > SKY_CAP)
+      resources?.setAllowance(this, this.capBytes * 2);
+    if (retained)
+      this.policyApplied = this.capBytes >= this.allocationPolicy.capBytes;
+    this.cpu = retained?.cpu ?? new SkyMemory(usable);
+    this.gpu = new SkyMemory(usable);
     if (
       resources &&
       !resources.acquire(this.safetyOwner, renderer, [], {
         label: "sky:safety-reserve",
-        extraBytes: SKY_RESERVE,
+        extraBytes: this.reserveBytes,
         pinned: true,
       })
     )
@@ -183,7 +229,7 @@ export class SkyTileScheduler {
     // combined budget. Do not fill that unallocated headroom with a pinned pool.
     return global
       ? Math.max(0, global.budgetBytes * 0.75 - global.estimatedBytes)
-      : SKY_USABLE;
+      : this.gpu.limit;
   }
 
   tick(
@@ -248,7 +294,7 @@ export class SkyTileScheduler {
     const idle = now - this.lastMotion >= IDLE_MS;
     const frameMs = this.lastFrame ? now - this.lastFrame : 16;
     this.lastFrame = now;
-    const overloaded = frameMs > 25 && frameMs < 1000;
+    const overloaded = this.notified && frameMs > 25 && frameMs < 1000;
     if (overloaded) this.pauseUntil = Math.max(this.pauseUntil, now + 100);
     const mayWork = !document.hidden && now >= this.pauseUntil && !overloaded;
     if (this.baseSourceFence) {
@@ -318,6 +364,8 @@ export class SkyTileScheduler {
         if (context.getError() !== context.NO_ERROR)
           throw new Error("Sky reserve GPU upload failed");
         this.sphere = new SkySphere(this.renderer, texture, this.cpu);
+        this.sphere.material.uniforms.detailLimit.value = 4;
+        this.sphere.material.uniforms.previousDetailLimit.value = 4;
         this.root.add(this.sphere.mesh);
       }
       if (performance.now() < deadline) this.diagnostics(now);
@@ -327,19 +375,17 @@ export class SkyTileScheduler {
       // Essential model/preview leases must be known before sizing optional Sky resources.
       if (!resourcesReady) return;
       if ((this.ready && !idle) || performance.now() >= deadline) return;
-      const maxSize = this.renderer.capabilities.maxTextureSize;
-      const candidates = [8192, 4096, 2048].filter(
-        (width) => width <= maxSize && width <= this.baseLimit,
-      );
-      const available = this.availableGlobalBytes();
-      const width = candidates.find((size) => {
-        // A base's full decode peak must fit before allocating a pool. Keep detail headroom.
-        const pixels = ((size * size) / 2) * 4;
-        return (
-          pixels * 3 + this.cpu.bytes <= SKY_USABLE &&
-          baseBytes(size) + pageBytes(1024) * 16 <=
-            Math.min(SKY_USABLE - this.gpu.bytes, available)
-        );
+      const global = this.resources?.snapshot();
+      const width = chooseBaseSize({
+        maxTextureSize: this.renderer.capabilities.maxTextureSize,
+        ceiling: this.baseLimit,
+        cpuBytes: this.cpu.bytes,
+        gpuBytes: this.gpu.bytes,
+        globalFree: global
+          ? Math.max(0, global.budgetBytes - global.estimatedBytes)
+          : this.gpu.limit,
+        streamingFree: this.availableGlobalBytes(),
+        usable: Math.min(this.cpu.limit, this.gpu.limit),
       });
       if (!width) {
         this.beginWarmup(deadline);
@@ -397,15 +443,13 @@ export class SkyTileScheduler {
         // Allocate the fixed array while startup/recovery is still covered by the loader.
         this.lastPoolAttempt = now;
         this.poolRequested = true;
-        this.callbacks.ready();
-        this.callbacks.state("ready");
       }
     }
     if (!this.ready) return;
     this.selector.update(camera, this.root.matrixWorld);
     if (this.poolRequested && performance.now() < deadline) {
       this.poolRequested = false;
-      this.createPool();
+      this.createPool(camera, pixelHeight, deadline);
     }
     if (
       !this.pool &&
@@ -415,10 +459,11 @@ export class SkyTileScheduler {
       now - this.lastPoolAttempt >= 1000
     ) {
       this.lastPoolAttempt = now;
-      this.createPool();
+      this.createPool(camera, pixelHeight, deadline);
     }
     const pool = this.pool;
     if (!pool || !this.table) {
+      if (!this.poolRequested) this.notifyReady();
       if (performance.now() < deadline) this.diagnostics(now);
       return;
     }
@@ -428,10 +473,23 @@ export class SkyTileScheduler {
       this.sphere!.material.uniforms.detailsEnabled.value = 0;
       this.group = null;
       this.transition = null;
+      this.coverageTarget = this.coverageReady = 4;
+      this.notifyReady();
       if (performance.now() < deadline) this.diagnostics(now);
       return;
     }
     this.updateTransition(now, mayWork, deadline);
+    if (this.coverageFade) {
+      const blend = Math.min(1, (now - this.coverageFade.started) / BLEND_MS);
+      this.sphere!.material.uniforms.coverageBlend.value = blend;
+      if (blend === 1) this.coverageFade = null;
+    }
+    if (
+      !this.coverageFade &&
+      this.coverageReady >= this.coverageTarget &&
+      this.aimedLevel() >= this.bootstrapTarget
+    )
+      this.notifyReady();
     if (
       this.group &&
       !this.transition &&
@@ -442,7 +500,7 @@ export class SkyTileScheduler {
         pool.retire(
           this.group.pages.flatMap((page) => {
             const slot = pool.find(page);
-            return slot ? [slot] : [];
+            return slot && !this.shown.includes(slot) ? [slot] : [];
           }),
         );
         for (const tile of this.group.tiles) this.loader.cancel(tileKey(tile));
@@ -455,7 +513,7 @@ export class SkyTileScheduler {
       !this.transition &&
       !this.resetProfile
     ) {
-      if (this.select(camera, pixelHeight, now, idle, mayWork, deadline))
+      if (this.select(camera, pixelHeight, now, mayWork, deadline))
         this.lastSelection = now;
     }
     if (
@@ -472,9 +530,7 @@ export class SkyTileScheduler {
         for (const tile of group.tiles) {
           if (performance.now() >= deadline) break;
           const pages = group.pages.filter((page) => page.tile.id === tile.id);
-          const complete = pages.every(
-            (page) => pool.find(page)?.state === "GPU uploaded",
-          );
+          const complete = pages.every((page) => resident(pool.find(page)));
           if (complete) {
             this.loader.cache.delete(tileKey(tile));
             continue;
@@ -488,17 +544,21 @@ export class SkyTileScheduler {
       }
       if (performance.now() >= deadline) return;
       const uploaded = group.pages.map((page) => pool.find(page));
-      if (
-        !pool.busy &&
-        uploaded.every((slot) => slot?.state === "GPU uploaded") &&
-        this.groupUseful(group)
-      ) {
+      if (!pool.busy && uploaded.every(resident) && this.groupUseful(group)) {
         const replaced = this.shown.filter(
-          (slot) => slot.page && contains(group.region, slot.page.tile),
+          (slot) =>
+            slot.page &&
+            contains(group.region, slot.page.tile) &&
+            slot.page.tile.level === group.target &&
+            !uploaded.includes(slot),
         );
-        const next = this.shown
-          .filter((slot) => !replaced.includes(slot))
-          .concat(uploaded as SkySlot[]);
+        const next = [
+          ...new Set(
+            this.shown
+              .filter((slot) => !replaced.includes(slot))
+              .concat(uploaded as SkySlot[]),
+          ),
+        ];
         if (mayWork && performance.now() < deadline)
           this.stage(next, replaced, group);
       }
@@ -531,7 +591,7 @@ export class SkyTileScheduler {
       this.profileIndex = this.nextProfile;
       this.slowUploads = 0;
       this.resetProfile = false;
-      this.leaves = virtualRegions();
+      this.coverageReady = 4;
       return;
     }
     if (
@@ -582,27 +642,81 @@ export class SkyTileScheduler {
     this.loader.cache.delete(this.baseKey);
   }
 
-  private createPool() {
+  private notifyReady() {
+    if (this.notified) return;
+    this.notified = true;
+    this.callbacks.ready();
+    this.callbacks.state("ready");
+  }
+
+  private poolPlanningIndex: number | null = null;
+  private aimedLevel() {
+    return Math.max(
+      4,
+      ...this.shown
+        .filter((slot) => slot.page && this.selector.aimed(slot.page.tile))
+        .map((slot) => slot.page!.tile.level),
+    );
+  }
+  private applyAllocationPolicy() {
+    if (this.policyApplied) return true;
+    if (performance.now() < this.policyReadyAt) {
+      this.poolRequested = true;
+      return false;
+    }
+    this.policyApplied = true;
+    const cap = this.allocationPolicy.capBytes;
+    if (cap <= this.capBytes) return true;
+    this.resources?.setAllowance(this, cap * 2);
+    const reserve = Math.ceil(cap * 0.15);
+    if (
+      this.resources &&
+      !this.resources.acquire(this.safetyOwner, this.renderer, [], {
+        label: "sky:safety-reserve",
+        extraBytes: reserve,
+        pinned: true,
+      })
+    ) {
+      this.resources.setAllowance(this, 0);
+      this.blockedBy = "Shared map budget";
+      return true;
+    }
+    this.capBytes = cap;
+    this.reserveBytes = reserve;
+    this.cpu.limit = this.gpu.limit = cap - reserve;
+    return true;
+  }
+  private createPool(
+    camera: PerspectiveCamera,
+    pixelHeight: number,
+    deadline: number,
+  ) {
     if (!this.sphere || !this.loader.detailStreamingEnabled) return;
+    if (!this.applyAllocationPolicy()) return;
     const context = this.renderer.getContext() as WebGL2RenderingContext;
     const maxLayers = context.getParameter(
       context.MAX_ARRAY_TEXTURE_LAYERS,
     ) as number;
     const maxSize = this.renderer.capabilities.maxTextureSize;
-    for (let i = this.profileIndex; i < PAGE_PROFILES.length; i++) {
+    for (
+      let i = this.poolPlanningIndex ?? this.profileIndex;
+      i < PAGE_PROFILES.length;
+      i++
+    ) {
       const core = PAGE_PROFILES[i];
       if (physical(core) > maxSize) continue;
       const width = 65536 / core;
-      const tables = ((width * width * 7) / 8) * 16 * 2;
+      const tables = ((width * width * 15) / 16) * 16 * 2;
       const bytesPerPage = pageBytes(core);
       const available = this.availableGlobalBytes();
-      const count = Math.min(
+      let count = Math.min(
         maxLayers,
         512,
-        Math.floor((SKY_USABLE - this.gpu.bytes - tables) / bytesPerPage),
+        Math.floor(this.poolCeiling / bytesPerPage),
+        Math.floor((this.gpu.limit - this.gpu.bytes - tables) / bytesPerPage),
         Math.floor((available - tables) / bytesPerPage),
         Math.floor(
-          (SKY_USABLE -
+          (this.cpu.limit -
             this.cpu.bytes -
             DECODE_PEAK -
             this.compressedHeadroom -
@@ -610,7 +724,29 @@ export class SkyTileScheduler {
             bytesPerPage,
         ),
       );
-      const minimumGroup = 4 * (2048 / core) ** 2;
+      const minimumGroup = (2048 / core) ** 2;
+      if (count < minimumGroup) continue;
+      const plan = this.selector.plan(
+        camera,
+        pixelHeight,
+        core,
+        count,
+        deadline,
+      );
+      if (!plan) {
+        this.poolPlanningIndex = i;
+        this.poolRequested = true;
+        return;
+      }
+      this.poolPlanningIndex = null;
+      this.coverageTarget = plan.coverage;
+      this.coverageBudget = plan.budget;
+      this.requirements = plan.requirements;
+      count = Math.min(count, plan.budget.capacity);
+      this.bootstrapTarget = Math.min(
+        plan.refinement,
+        plan.coverage * 2 ** Math.floor(plan.budget.cachePages / minimumGroup),
+      );
       if (count < minimumGroup) continue;
       const owner = {};
       if (!this.admit(owner, count * bytesPerPage + tables)) continue;
@@ -648,6 +784,10 @@ export class SkyTileScheduler {
         this.table = null;
         this.release(owner);
         this.error = error instanceof Error ? error.message : String(error);
+        this.poolCeiling = Math.min(
+          this.poolCeiling,
+          (count * bytesPerPage) / 2,
+        );
       }
     }
   }
@@ -668,11 +808,11 @@ export class SkyTileScheduler {
     camera: PerspectiveCamera,
     pixelHeight: number,
     now: number,
-    idle: boolean,
     mayWork: boolean,
     deadline: number,
   ): boolean {
     const pool = this.pool!;
+    if (this.coverageFade) return true;
     if (this.group) {
       if (this.groupUseful(this.group)) {
         this.unwantedSince = 0;
@@ -685,7 +825,7 @@ export class SkyTileScheduler {
       pool.retire(
         this.group.pages.flatMap((page) => {
           const slot = pool.find(page);
-          return slot ? [slot] : [];
+          return slot && !this.shown.includes(slot) ? [slot] : [];
         }),
       );
       for (const tile of this.group.tiles) this.loader.cancel(tileKey(tile));
@@ -695,7 +835,7 @@ export class SkyTileScheduler {
     if (performance.now() >= deadline) return false;
     if (
       !this.selectionScan ||
-      this.selectionScan.leaves !== this.leaves ||
+      this.selectionScan.leaves !== this.regions ||
       this.selectionScan.core !== pool.core
     ) {
       const plan = this.selector.plan(
@@ -706,12 +846,17 @@ export class SkyTileScheduler {
         deadline,
       );
       if (!plan) return false;
+      this.coverageTarget = plan.coverage;
+      this.coverageBudget = plan.budget;
+      this.requirements = plan.requirements;
       this.selectionScan = {
-        leaves: this.leaves,
+        leaves: this.regions,
         core: pool.core,
         plan,
         cursor: 0,
-        coarse: new Set(),
+        coverageReady: plan.coverage,
+        blockedAt: Infinity,
+        bootstrapBlockedAt: Infinity,
         best: null,
         priority: -Infinity,
       };
@@ -719,42 +864,60 @@ export class SkyTileScheduler {
     const scan = this.selectionScan;
     while (scan.cursor < scan.leaves.length && performance.now() < deadline) {
       const leaf = scan.leaves[scan.cursor++];
-      let candidate: LodTransitionGroup;
-      if (leaf.level > scan.plan.refinement) {
-        const factor = leaf.level / scan.plan.refinement;
-        const region = {
-          level: scan.plan.refinement,
-          row: Math.floor(leaf.row / factor),
-          column: Math.floor(leaf.column / factor),
-        };
-        const key = regionKey(region);
-        if (scan.coarse.has(key)) continue;
-        scan.coarse.add(key);
-        candidate = describeGroup(region, true);
-      } else {
-        const missing =
-          leaf.level !== 8 &&
-          !this.shown.some((slot) => slot.page?.tile.id === regionKey(leaf));
+      if (!this.selector.useful(leaf)) continue;
+      const missing = !this.shown.some(
+        (slot) => slot.page?.tile.id === regionKey(leaf),
+      );
+      if (
+        missing &&
+        leaf.level <= scan.plan.coverage &&
+        this.selector.useful(leaf, false)
+      )
+        scan.coverageReady = Math.min(scan.coverageReady, leaf.level / 2);
+      if (!missing || leaf.level > scan.plan.refinement) continue;
+      if (leaf.level > scan.plan.coverage) {
+        const parent = {
+          level: leaf.level / 2,
+          row: Math.floor(leaf.row / 2),
+          column: Math.floor(leaf.column / 2),
+        } as SkyRegion;
         if (
-          !missing &&
-          (leaf.level === 64 || leaf.level >= scan.plan.refinement)
+          this.coverageReady < scan.plan.coverage ||
+          !this.shown.some((slot) => slot.page?.tile.id === regionKey(parent))
         )
           continue;
-        candidate = describeGroup(leaf, missing);
       }
+      const candidate = describeGroup(leaf);
       if (
         candidate.tiles.some((tile) =>
           this.loader.unavailable(tileKey(tile)),
         ) ||
         !this.groupUseful(candidate)
-      )
+      ) {
+        if (
+          leaf.level <= scan.plan.coverage &&
+          this.selector.useful(leaf, false)
+        )
+          scan.blockedAt = Math.min(scan.blockedAt, leaf.level);
+        if (this.selector.aimed(leaf))
+          scan.bootstrapBlockedAt = Math.min(
+            scan.bootstrapBlockedAt,
+            leaf.level,
+          );
         continue;
+      }
       const priority = this.selector.priority(candidate.region);
       const best = scan.best;
+      const floor = Math.max(8, scan.plan.coverage);
+      const category = (item: LodTransitionGroup) =>
+        this.selector.useful(item.region, false)
+          ? Number(item.target > floor)
+          : 2;
       const rank = best
-        ? Number(candidate.target > scan.plan.coverage) -
-            Number(best.target > scan.plan.coverage) ||
-          candidate.target - best.target
+        ? category(candidate) - category(best) ||
+          (category(candidate) === 0 && category(best) === 0
+            ? candidate.target - best.target
+            : 0)
         : -1;
       if (!best || rank < 0 || (rank === 0 && priority > scan.priority)) {
         scan.best = candidate;
@@ -763,25 +926,88 @@ export class SkyTileScheduler {
     }
     if (scan.cursor < scan.leaves.length || performance.now() >= deadline)
       return false;
+    this.coverageReady = scan.coverageReady;
+    this.coverageTarget = Math.min(scan.plan.coverage, scan.blockedAt / 2);
+    this.bootstrapTarget = Math.min(
+      this.bootstrapTarget,
+      scan.blockedAt / 2,
+      scan.bootstrapBlockedAt / 2,
+    );
+    const displayLimit =
+      this.coverageReady >= this.coverageTarget
+        ? scan.plan.refinement
+        : this.coverageReady;
+    if (displayLimit !== this.detailLimit) {
+      const uniforms = this.sphere!.material.uniforms;
+      uniforms.previousDetailLimit.value = this.detailLimit;
+      this.detailLimit = displayLimit;
+      uniforms.detailLimit.value = this.detailLimit;
+      uniforms.coverageBlend.value = 0;
+      this.coverageFade = { started: now };
+      this.selectionScan = null;
+      return true;
+    }
+    const residentLimit =
+      scan.plan.budget.workingPages + scan.plan.budget.cachePages;
+    if (this.shown.length > residentLimit && !pool.busy) {
+      const offscreen = this.shown.find(
+        (slot) => slot.page && !this.selector.useful(slot.page.tile, false),
+      );
+      if (offscreen?.page && performance.now() < deadline) {
+        const id = offscreen.page.tile.id;
+        const retired = this.shown.filter((slot) => slot.page?.tile.id === id);
+        this.stage(
+          this.shown.filter((slot) => !retired.includes(slot)),
+          retired,
+          null,
+        );
+        return true;
+      }
+    }
     const candidate = scan.best;
-    if (
-      !candidate ||
-      !this.groupUseful(candidate) ||
-      (!idle && candidate.target > 16)
-    ) {
+    if (!candidate || !this.groupUseful(candidate)) {
+      this.blockedBy = "Screen-space quality target";
       this.selectionScan = null;
       return true;
     }
     const skyCost = this.sphere?.timer.poll();
-    if (skyCost !== null && skyCost !== undefined && skyCost > 4) {
+    if (
+      this.notified &&
+      skyCost !== null &&
+      skyCost !== undefined &&
+      skyCost > 4
+    ) {
+      this.blockedBy = "Sky shader cost";
       this.selectionScan = null;
       return true;
     }
-    const required = candidate.tiles.length * (2048 / pool.core) ** 2;
-    if (required > pool.free) {
+    const reusable = pool.slots.filter(
+      (slot) =>
+        resident(slot) &&
+        candidate.tiles.some((tile) => tile.id === slot.page?.tile.id),
+    ).length;
+    const required =
+      candidate.tiles.length * (2048 / pool.core) ** 2 - reusable;
+    if (
+      !this.selector.useful(candidate.region, false) &&
+      pool.free - required < scan.plan.budget.transitionPages
+    ) {
+      this.blockedBy = "Transition headroom";
+      this.selectionScan = null;
+      return true;
+    }
+    const available =
+      candidate.target > scan.plan.coverage
+        ? Math.max(0, pool.free - scan.plan.budget.transitionPages)
+        : pool.free;
+    if (required > available) {
+      this.blockedBy =
+        available < pool.free ? "Transition headroom" : "GPU pool capacity";
+      if (!this.notified && this.selector.aimed(candidate.region))
+        this.bootstrapTarget = this.aimedLevel();
       this.selectionScan = null;
       const unused = this.shown.filter(
-        (slot) => slot.page && !this.selector.useful(slot.page.tile),
+        (slot) => slot.page && !this.selector.useful(slot.page.tile, false),
       );
       if (unused.length && !pool.busy) {
         unused.sort(
@@ -797,24 +1023,33 @@ export class SkyTileScheduler {
             retired,
             null,
           );
-      } else if (
-        !pool.busy &&
-        this.shown.some(
+      } else if (!pool.busy) {
+        const peripheral = this.shown.filter(
           (slot) =>
             slot.page &&
-            contains(candidate.region, slot.page.tile) &&
-            slot.page.tile.level > candidate.target,
-        )
-      ) {
-        const retired = this.shown.filter(
-          (slot) => slot.page && contains(candidate.region, slot.page.tile),
+            slot.page.tile.level > Math.max(8, scan.plan.coverage) &&
+            !contains(slot.page.tile, candidate.region) &&
+            !this.selector.aimed(slot.page.tile) &&
+            (candidate.target <= scan.plan.coverage ||
+              this.selector.priority(slot.page.tile) + 0.02 <
+                this.selector.priority(candidate.region)),
         );
-        if (performance.now() < deadline)
+        peripheral.sort(
+          (a, b) =>
+            this.selector.priority(a.page!.tile) -
+            this.selector.priority(b.page!.tile),
+        );
+        const region = peripheral[0]?.page?.tile;
+        if (region && performance.now() < deadline) {
+          const retired = this.shown.filter(
+            (slot) => slot.page && contains(region, slot.page.tile),
+          );
           this.stage(
             this.shown.filter((slot) => !retired.includes(slot)),
             retired,
             null,
           );
+        }
       }
       return true;
     }
@@ -824,12 +1059,18 @@ export class SkyTileScheduler {
     )
       return false;
     const sourcePages = this.shown
-      .filter((slot) => slot.page && contains(candidate.region, slot.page.tile))
+      .filter(
+        (slot) =>
+          slot.page &&
+          (contains(candidate.region, slot.page.tile) ||
+            contains(slot.page.tile, candidate.region)),
+      )
       .map((slot) => slot.page!.id);
     candidate.currentCoverage = sourcePages.length
       ? { kind: "pages", pageIds: sourcePages }
       : { kind: "base" };
     this.group = candidate;
+    this.blockedBy = "Streaming";
     this.selectionScan = null;
     this.unwantedSince = 0;
     for (const slot of this.shown)
@@ -892,12 +1133,6 @@ export class SkyTileScheduler {
     this.shown = transition.next;
     for (const slot of this.shown) slot.state = "Visible";
     this.pool.retire(transition.retired);
-    if (transition.group) {
-      this.leaves = this.leaves.filter(
-        (region) => !contains(transition.group!.region, region),
-      );
-      this.leaves.push(...transition.group.tiles);
-    }
     this.group = null;
     this.transition = null;
     if (this.resetProfile) this.pool.retire(this.pool.slots);
@@ -912,6 +1147,10 @@ export class SkyTileScheduler {
   private destroyPool() {
     if (!this.sphere) return;
     const uniforms = this.sphere.material.uniforms;
+    this.detailLimit = this.coverageReady = 4;
+    this.coverageFade = null;
+    uniforms.detailLimit.value = uniforms.previousDetailLimit.value = 4;
+    uniforms.coverageBlend.value = 1;
     uniforms.detailsEnabled.value = 0;
     uniforms.skyPages.value = this.sphere.dummyPages;
     uniforms.previousTable.value = uniforms.nextTable.value =
@@ -957,10 +1196,26 @@ export class SkyTileScheduler {
       revision: this.loader.manifest.revision,
       profile: this.pool ? physical(this.pool.core) : 0,
       base: this.baseSize || 256,
-      cpuBytes: this.cpu.bytes + SKY_RESERVE,
-      gpuBytes: this.gpu.bytes + SKY_RESERVE,
+      cpuBytes: this.cpu.bytes + this.reserveBytes,
+      gpuBytes: this.gpu.bytes + this.reserveBytes,
+      capBytes: this.capBytes,
+      blockedBy: this.loader.blockedBy ?? this.blockedBy,
+      allocationMode: this.allocationPolicy.mode,
+      coverageTarget: this.coverageTarget,
+      coverageReady: this.coverageReady,
+      workingBytes: this.coverageBudget?.workingBytes ?? 0,
+      transitionBytes: this.coverageBudget?.transitionBytes ?? 0,
+      cachePages: this.coverageBudget?.cachePages ?? 0,
+      requirements: this.requirements,
       slots: this.pool?.slots.length ?? 0,
       used: this.pool ? this.pool.slots.length - this.pool.free : 0,
+      visibleLevel: Math.max(
+        0,
+        ...this.shown.map((slot) => {
+          const level = slot.page?.tile.level ?? 0;
+          return level <= this.detailLimit ? level : 0;
+        }),
+      ),
       requests: this.loader.networkInFlight,
       viewGeneration: this.viewGeneration,
       uploadMs: this.pool?.lastUploadMs ?? 0,
@@ -1006,7 +1261,8 @@ export class SkyTileScheduler {
         this.release(texture);
       }
     this.resources?.release(this.safetyOwner);
-    return { cpu: this.cpu, loader: this.loader };
+    this.resources?.setAllowance(this, 0);
+    return { cpu: this.cpu, loader: this.loader, capBytes: this.capBytes };
   }
   dispose() {
     this.detach();

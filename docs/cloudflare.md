@@ -44,7 +44,26 @@ One resource coordinator accounts for texture objects per WebGL context, so a sh
 
 New model tiers remain hidden during upload and shader compilation. A preparation callback selects the next tier in one React commit. A per-renderer draw fence selects exactly one prepared layer before rendering, also covering Lite-to-Full handoffs between the DOM and R3F React roots and fallback after a Full failure. `?diagnostics=1` exposes `window.__ORBITAL_MAP_RESOURCES__.snapshot()` for resource and per-frame presentation regression checks.
 
-Sky startup waits for its prepared base and warmed shader. Detail requests do not extend that gate. Missing or deferred detail retains the prepared parent/base; permanent integrity failures suppress retries, and transient failures use bounded backoff. Context loss switches to an HTML fallback with home navigation while resources recover.
+Sky startup waits for its prepared base, warmed shader and highest admitted
+whole-view detail level and admitted camera-centre refinement, including the final GPU-confirmed blend. Missing detail
+retains a complete parent/base; permanent integrity failures suppress retries,
+and transient failures use bounded backoff. Context loss switches to an HTML
+fallback with home navigation while resources recover.
+
+Large viewports keep postprocessing within 192 MiB or a quarter of the combined
+GPU allowance, whichever is smaller. A main 2K base can use actual available
+memory even when Full-model transition headroom prevents a detail pool.
+An immutable 8K supplement restores with the main release. Complete visible
+8K coverage precedes higher levels; partially visible tiles remain eligible.
+32K/64K local refinements follow complete baseline coverage and resident parents.
+`ViewportCoverageBudget` sizes the working set, transition reserve and look-ahead
+cache from viewport demand. Coarse device hints admit 512 MiB after four seconds
+of bootstrap; constrained/unknown devices keep 256 MiB. The explicit experimental
+`?diagnostics=1&skyMemory=1024` profile permits 1 GiB per CPU/GPU. It does not guess
+VRAM from adapter names or grow allocations until failure. Pool admission uses
+75% of the shared application allowance,
+not an unavailable browser measurement of free VRAM. Exposed detail boundaries blend spatially into
+retained ancestors, while internal page joins keep full detail.
 
 ## Weather and images
 

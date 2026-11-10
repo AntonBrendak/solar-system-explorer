@@ -40,8 +40,9 @@ def main():
         "--archive", type=Path,
         help="Use a local archive instead of downloading the GitHub Release",
     )
+    parser.add_argument("--coverage", action="store_true", help="Restore the pinned 8K supplement")
     args = parser.parse_args()
-    lock_path = ROOT / "widgets/solar-system/sky/model/sky-atlas.lock.json"
+    lock_path = ROOT / "widgets/solar-system/sky/model" / ("sky-coverage.lock.json" if args.coverage else "sky-atlas.lock.json")
     lock = json.loads(lock_path.read_text(encoding="utf-8"))
     revision = lock["revision"]
     if not re.fullmatch(r"[a-f0-9]{64}", revision):
@@ -53,7 +54,7 @@ def main():
         or metadata["bytes"] <= 0
     ):
         raise ValueError("No pinned archive; prepare:sky -- --archive is required")
-    name = f"sky-v2-{revision}.zip"
+    name = metadata.get("name", f"sky-v2-{revision}.zip")
     archive = args.archive.resolve() if args.archive else ROOT / "artifacts" / name
     if not archive.exists():
         if args.archive:
@@ -61,7 +62,7 @@ def main():
         archive.parent.mkdir(parents=True, exist_ok=True)
         url = (
             f"https://github.com/{REPOSITORY}/releases/download/"
-            f"sky-v2-{revision}/{name}"
+            f"{metadata.get('releaseTag', f'sky-v2-{revision}')}/{name}"
         )
         pending = archive.with_suffix(".zip.part")
         print(f"Downloading {url}", flush=True)
@@ -86,7 +87,7 @@ def main():
         or digest(archive) != metadata["sha256"]
     ):
         raise ValueError("Local Sky archive failed length/SHA-256 verification")
-    prefix = f"textures/space/revisions/v2/{revision}/"
+    prefix = f"textures/space/revisions/{'coverage' if args.coverage else 'v2'}/{revision}/"
     if lock["root"] != "/" + prefix.rstrip("/"):
         raise ValueError("Locked revision path is invalid")
     destination = ROOT / "public" / prefix.rstrip("/")
@@ -105,9 +106,9 @@ def main():
             raise ValueError("Archived manifest hash mismatch")
         manifest = json.loads(manifest_bytes)
         if (
-            manifest.get("schema") != 2
+            manifest.get("schema") != (1 if args.coverage else 2)
             or manifest.get("revision") != revision
-            or len(manifest["files"]) != 676
+            or len(manifest["files"]) != (8 if args.coverage else 676)
         ):
             raise ValueError("Archived revision is incomplete or incompatible")
         expected = {manifest_name: {"bytes": len(manifest_bytes)}}

@@ -39,9 +39,12 @@ type Lease = LeaseOptions & {
  */
 export function createGpuResourceBudget(initialBudget: number) {
   let budgetBytes = initialBudget;
+  let baseBudget = initialBudget;
+  const allowances = new Map<object, number>();
   let tick = 0;
   let evictions = 0;
   const leases = new Map<object, Lease>();
+  const budgetListeners = new Set<() => void>();
   const renderers = new Map<
     object,
     { name: string; renderer: WebGLRenderer }
@@ -78,9 +81,29 @@ export function createGpuResourceBudget(initialBudget: number) {
     }
   };
   return {
+    getBudget: () => budgetBytes,
+    subscribeBudget(listener: () => void) {
+      budgetListeners.add(listener);
+      return () => {
+        budgetListeners.delete(listener);
+      };
+    },
     setBudget(bytes: number) {
-      budgetBytes = bytes;
+      baseBudget = bytes;
+      const next = Math.max(baseBudget, ...allowances.values());
+      const changed = budgetBytes !== next;
+      budgetBytes = next;
       trim();
+      if (changed) budgetListeners.forEach((listener) => listener());
+    },
+    setAllowance(owner: object, bytes: number) {
+      if (bytes) allowances.set(owner, bytes);
+      else allowances.delete(owner);
+      const next = Math.max(baseBudget, ...allowances.values());
+      if (next === budgetBytes) return;
+      budgetBytes = next;
+      trim();
+      budgetListeners.forEach((listener) => listener());
     },
     acquire(
       owner: object,

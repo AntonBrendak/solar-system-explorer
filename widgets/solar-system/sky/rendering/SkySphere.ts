@@ -63,20 +63,20 @@ export class SkySphere {
     );
     if (reservation === null) throw new Error("Sky warmup memory unavailable");
     this.reservation = reservation;
-    const data = new Float32Array(64 * 56 * 4);
+    const data = new Float32Array(64 * 60 * 4);
     for (let i = 0; i < data.length; i += 4) data[i] = 1;
     this.dummyPages = new DataArrayTexture(new Uint8Array(4 * 4 * 4), 4, 4, 1);
     this.dummyPages.colorSpace = SRGBColorSpace;
     this.dummyPages.minFilter = this.dummyPages.magFilter = LinearFilter;
     this.dummyPages.needsUpdate = true;
-    this.dummyTable = new DataTexture(data, 64, 56, RGBAFormat, FloatType);
+    this.dummyTable = new DataTexture(data, 64, 60, RGBAFormat, FloatType);
     this.dummyTable.needsUpdate = true;
     this.material = createSkyShader(
       base,
       this.dummyPages,
       this.dummyTable,
       1024,
-      new Vector2(64, 56),
+      new Vector2(64, 60),
     );
     this.mesh = new Mesh(new SphereGeometry(500, 64, 48), this.material);
     this.mesh.frustumCulled = false;
@@ -122,11 +122,17 @@ export class SkySphere {
           const saved = {
             details: uniforms.detailsEnabled.value,
             fade: uniforms.transition.value,
+            limit: uniforms.detailLimit.value,
+            previousLimit: uniforms.previousDetailLimit.value,
+            coverage: uniforms.coverageBlend.value,
           };
           try {
             this.renderer.setRenderTarget(this.warmTarget);
             uniforms.detailsEnabled.value = 1;
             uniforms.transition.value = 0.5;
+            uniforms.detailLimit.value = 64;
+            uniforms.previousDetailLimit.value = 8;
+            uniforms.coverageBlend.value = 0.5;
             this.renderer.render(scene, camera);
             const gl = this.renderer.getContext() as WebGL2RenderingContext;
             const fence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
@@ -138,6 +144,9 @@ export class SkySphere {
           } finally {
             uniforms.detailsEnabled.value = saved.details;
             uniforms.transition.value = saved.fade;
+            uniforms.detailLimit.value = saved.limit;
+            uniforms.previousDetailLimit.value = saved.previousLimit;
+            uniforms.coverageBlend.value = saved.coverage;
             this.renderer.setRenderTarget(target);
             this.warmTarget?.dispose();
             this.warmTarget = null;

@@ -59,6 +59,13 @@ export function SkySystem({
             metrics: (value) => {
               gl.domElement.dataset.skyStreaming = value.state;
               gl.domElement.dataset.skyRevision = value.revision;
+              gl.domElement.dataset.skyBase = String(value.base);
+              gl.domElement.dataset.skyPages = String(value.used);
+              gl.domElement.dataset.skySlots = String(value.slots);
+              gl.domElement.dataset.skyLevel = String(value.visibleLevel);
+              gl.domElement.dataset.skyCoverage = String(value.coverageReady);
+              gl.domElement.dataset.skyTarget = String(value.coverageTarget);
+              gl.domElement.dataset.skyCap = String(value.capBytes);
               callbacks.current.onMetrics(value);
             },
           },

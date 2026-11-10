@@ -58,3 +58,42 @@ for (const asset of Object.values(manifest.files)) {
     fail("Sky asset content hash mismatch");
 }
 console.log(`Sky revision ${lock.revision.slice(0, 12)}: complete`);
+if (lock.schema === 2 && !lock.coverageLockSha256)
+  fail("Sky coverage supplement is not pinned");
+if (lock.coverageLockSha256) {
+  const bytes = readFileSync(
+    "widgets/solar-system/sky/model/sky-coverage.lock.json",
+  );
+  if (
+    createHash("sha256").update(bytes).digest("hex") !== lock.coverageLockSha256
+  )
+    fail("Coverage lock hash mismatch");
+  const coverage = JSON.parse(bytes);
+  if (
+    !/^[a-f0-9]{64}$/.test(coverage.revision) ||
+    coverage.root !==
+      `/textures/space/revisions/coverage/${coverage.revision}` ||
+    coverage.parameters.parentRevision !== lock.revision ||
+    !coverage.validation.decodedPixelsMatchSource ||
+    Object.keys(coverage.files).length !== 8
+  )
+    fail("Coverage supplement is incompatible");
+  const root = resolve("public", `.${coverage.root}`);
+  if (
+    createHash("sha256")
+      .update(readFileSync(resolve(root, "manifest.json")))
+      .digest("hex") !== coverage.manifestSha256
+  )
+    fail("Coverage manifest hash mismatch");
+  for (const asset of Object.values(coverage.files)) {
+    const path = resolve(root, asset.path);
+    if (
+      !path.startsWith(root + sep) ||
+      statSync(path).size !== asset.bytes ||
+      createHash("sha256").update(readFileSync(path)).digest("hex") !==
+        asset.sha256
+    )
+      fail("Coverage asset content mismatch");
+  }
+  console.log(`8K coverage ${coverage.revision.slice(0, 12)}: complete`);
+}

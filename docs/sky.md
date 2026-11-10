@@ -21,6 +21,10 @@ The release tag is `sky-v2-<revision>` and its asset is
 `model/sky-atlas.lock.json`. CI restores it before the production build.
 A [published release for the current revision](https://github.com/AntonBrendak/solar-system-explorer/releases/tag/sky-v2-fafbe0927e770783d1e9ff33a91211beb21515ff1ed2d34f6b0ff2eb2199951e)
 contains the immutable archive and its separate measured registration report.
+A second pinned `sky-coverage-<revision>.zip` asset contains eight lossless
+8K streaming tiles. `restore:sky` restores both archives; the original 865 MiB
+archive and registration proof remain unchanged. The coverage lock is itself
+hashed by the main lock, and the build verifies every supplement file.
 A local archive under `artifacts/` is reused, or can be selected explicitly:
 
 ```sh
@@ -84,12 +88,13 @@ can be removed explicitly when no preparation command is running.
   profiles have **physical** sizes 1028², 516² and 260². Linear page filtering
   uses neither mipmaps nor anisotropy. Limits use both `MAX_TEXTURE_SIZE` and
   `MAX_ARRAY_TEXTURE_LAYERS`.
-- A spatial transition region has four logical children, containing 16, 64 or
-  256 physical pages, respectively. The selector conservatively intersects
+- A spatial transition region is one complete network tile, containing 4, 16
+  or 64 physical pages, respectively. Its angular extent stays the same across
+  page profiles. The selector conservatively intersects
   spherical regions with actual projection planes, including view offsets.
   The full source/target peak must fit the fixed pool before a group starts.
-  Coverage selection counts complete angular groups, including offscreen child
-  pages. A separate density goal permits local refinement after coarser coverage;
+  Coverage selection counts complete intersecting tiles and retained ancestors.
+  A separate density goal permits local refinement after coarser coverage;
   it does not pretend the whole view can fit the highest level.
 - Revisions and context/pool/slot/upload/reservation identities are strict.
   `viewGeneration` is advisory. A still-useful tile adopts a new view without
@@ -104,25 +109,40 @@ can be removed explicitly when no preparation command is running.
   failures and completion. Backing slices and decoded inputs remain protected
   until completion. A whole prepared page table has its own upload fence and
   becomes visible only at a frame boundary. Readers retire through fences.
-- One spatial group blends for 400 ms. Parents remain visible until complete
-  target coverage exists. A 256×128 reserve remains resident through resource
+- One spatial group blends for 400 ms. Coarser ancestors remain resident for
+  spatial blending at exposed coverage edges. Same-level page joins remain
+  fully detailed; missing edge/corner neighbours feather into the nearest
+  prepared ancestor in linear RGB. A 256×128 reserve remains resident through resource
   swaps; context loss uses HTML with that image and the always-available home
   link, then recreates GPU resources from the retained, valid CPU cache.
 
 ## Budgets and scheduling
 
-Sky has independent CPU/GPU ceilings of 256 MiB, each including 15% safety
-reserve. The ledgers account for the entire fixed pool, CPU backing array,
+Sky starts with independent CPU/GPU ceilings of 256 MiB, each including 15%
+safety reserve. After four seconds of bootstrap, coarse device hints permit
+512 MiB when device memory is at least 8 GiB, concurrency is at least eight,
+Save-Data is off, and WebGL supports 8K textures and at least 256 array layers.
+Unknown or constrained devices keep 256 MiB. These are declared application
+allowances, not free-VRAM estimates or successful-allocation benchmarks.
+GPU model names are not inspected. A positive FPS does not prove free memory.
+`?diagnostics=1&skyMemory=1024` explicitly enables the bounded experimental
+1 GiB profile; 256 and 512 are also accepted. The shared map/preview allowance
+increases with an admitted larger profile and falls back when its owner exits.
+The ledgers account for the entire fixed pool, CPU backing array,
 both page tables, bases and base mipmaps, compressed responses, decoder peak,
 decoded cache and temporary coexistence. Global GPU admission includes the
 other models, postprocessing and preview context. Renderer counters and JS
 heap diagnostics are separate from those reservations; ordinary Web APIs do
 not expose exact browser-process or driver allocations.
 
-Base selection and pool sizing leave one quarter of the combined map budget
-unallocated for a Full-model transition. This matches the Full-model policy's
-peak allowance and prevents a pinned Sky pool from exhausting the space needed
-to prepare the next model tier. Main-base selection waits until the Sun and
+Pool sizing uses at most 75% of the combined application allowance after
+subtracting existing leases, including Sky's safety reserve. The remaining
+25% covers model transitions and unallocated headroom. Ordinary browser APIs
+cannot report free VRAM; neither renderer limits nor `deviceMemory` supply it.
+The app therefore never claims to allocate 70% of a visitor's free VRAM.
+Base selection prefers the same headroom, but admits a
+2K base when it fits the actual shared budget even if a whole detail group
+does not fit alongside it. Main-base selection waits until the Sun and
 all 17 initial Lite models/previews have registered their resource leases;
 allocation order cannot hide their mandatory footprint. This is memory
 admission, independent of FPS.
@@ -133,10 +153,55 @@ reacquires that immutable source through the loader. The small reserve keeps
 its CPU pixels. Pool sizing reserves decoder space and twice the manifest's
 largest compressed network tile, so queued responses cannot deadlock decoding.
 
-Bases are admitted from 8K/4K/2K according to physical limits, decode peak and
-group headroom. With the current RGBA8 Canvas decode path, the conservative
-8K decode peak exceeds the CPU cap, so it is rejected rather than silently
-breaking the budget. A smaller base or the permanent reserve remains valid.
+The permanent full-sphere base prefers 4K and falls back to 2K according to
+physical limits and decode peak. An 8K virtual level supplies the first whole-view
+streaming target instead of occupying 170.7 MiB with a mipmapped 8K base.
+A smaller base or the permanent reserve remains valid under hard limits.
+
+Postprocessing storage is capped at the smaller of 192 MiB and one quarter
+of the shared GPU budget. Multisampling requires the stricter 96 MiB / one-eighth
+allowance so it cannot prevent camera-directed refinement. It is disabled first; only if resolved
+buffers still exceed the cap is their pixel ratio reduced. This keeps a large
+viewport from consuming Sky's mandatory base allowance.
+
+`ViewportCoverageBudget` selects the highest complete-view level that fits
+the working set, all retained ancestors and a separate complete-tile transition
+reserve. Visible coverage at 8K precedes 16K coverage. Screen height, DPR and
+effective FOV determine the whole-view goal;
+the projected camera centre ranks candidates within that policy. Any intersecting
+tile is eligible without full viewport containment. Partially prepared higher
+coverage levels remain hidden until the whole view is covered, then the complete
+view blends for 400 ms. Once that baseline is complete, the camera direction
+may refine locally up to four times its source width, capped at 64K. A parent
+must be resident before a local child is requested. Baseline coverage and
+readers stay protected; a peripheral refinement yields only to a higher-priority
+replacement, avoiding repeated eviction/download cycles in a stationary view.
+Diagnostics show ready/target coverage, the allocation ceiling, visible detail
+and the 64K whole-view page peak including ancestors and transition headroom.
+The diagnostics distinguish CPU pressure, physical pool capacity, transition
+headroom, shader cost and the configured quality ceiling. These decisions are
+independent of another scene component's FPS.
+
+Physical pool capacity derives from this viewport's selected working set,
+one transition tile and a bounded refinement/look-ahead cache: the larger of two
+network tiles and 25% of the working set, clamped by available headroom and both memory
+ledgers and the shared map allowance. Offscreen residency follows the current
+viewport cache target; it cannot consume transition slots. The array does not
+grow by probing available memory, and no second full backing array is created
+during an active replacement. The larger profile is admitted before the first
+array allocation, so CPU backing storage does not temporarily double.
+
+Reproduce the 8K supplement using the pinned toolchain:
+
+```sh
+python scripts/star-atlas/prepare_coverage.py
+```
+
+The command reads the existing encoded 8K base in scanline blocks under the
+512 MiB process-family limit. Lossless tiles and gutters must match their source
+pixels after decoding. Tool versions and the source hash identify the immutable
+revision, and fixed ZIP metadata makes its archive reproducible. No NASA source
+download or recalibration of the existing 16K/32K/64K revision occurs.
 
 Scene overload pauses uploads, copying and new decodes while preserving shown
 LOD. It never attributes another object's slowdown to Sky. Submission time
@@ -148,8 +213,12 @@ GPU draw samples reserve separate frames so the full-renderer and Sky queries
 cannot nest; disjoint samples are discarded. These measurements restrict new
 transitions, without an automatic FPS-driven LOD decrease.
 
-Startup waits for the base, compiled/offscreen-warmed shader and all 17 initial
-models/previews. Detailed tile requests do not extend the initial loader.
+Startup waits for the base, compiled/offscreen-warmed shader, all 17 initial
+models/previews, the highest budget-admitted whole-view Sky level and the admitted
+camera-centre refinement, including GPU/table fences and final blends. Bootstrap
+streaming may finish under the loader even when the hidden scene has slow frames;
+native upload backoff still applies. A terminal tile failure selects
+the prepared lower complete-view level so startup cannot wait forever.
 The collapsed FPS control contains map, preview and Sky diagnostics. React
 does not subscribe to per-frame camera, queue, table or blend changes.
 

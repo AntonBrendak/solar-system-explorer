@@ -63,6 +63,21 @@ import { createGpuFrameTimer } from "../shared/lib/gpu-frame-timer.ts";
 
 const texture = () => new DataTexture(new Uint8Array(64), 4, 4);
 
+test("an admitted streaming allowance survives base-profile updates and releases back to the combined baseline", () => {
+  const budget = createGpuResourceBudget(128),
+    sky = {};
+  let updates = 0;
+  const unsubscribe = budget.subscribeBudget(() => updates++);
+  budget.setAllowance(sky, 1024);
+  budget.setBudget(256);
+  assert.equal(budget.getBudget(), 1024);
+  assert.equal(updates, 1);
+  budget.setAllowance(sky, 0);
+  assert.equal(budget.getBudget(), 256);
+  assert.equal(updates, 2);
+  unsubscribe();
+});
+
 test("shared GPU accounting deduplicates owners per context and protects visible/pending models", () => {
   const budget = createGpuResourceBudget(128);
   const map = {},

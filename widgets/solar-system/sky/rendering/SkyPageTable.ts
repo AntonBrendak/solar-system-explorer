@@ -8,6 +8,7 @@ import {
 import type { SkySlot } from "../streaming/SkyGpuPool";
 import type { PageCore } from "../model/sky-types";
 import type { SkyMemory } from "../streaming/SkyMemory";
+import { coverageEdgeMask } from "./sky-coverage";
 
 export class SkyPageTable {
   readonly textures: [DataTexture, DataTexture];
@@ -23,13 +24,14 @@ export class SkyPageTable {
   private clearOffset = 0;
   private stagedSlots: SkySlot[] = [];
   private entryOffset = 0;
+  private edgeOffset = 0;
   lastUploadMs = 0;
   constructor(
     readonly core: PageCore,
     private memory: SkyMemory,
   ) {
     this.width = 65536 / core;
-    this.height = (this.width * 7) / 8;
+    this.height = (this.width * 15) / 16;
     this.bytes = this.width * this.height * 16 * 2;
     const reservation = memory.reserve(this.bytes, "page-tables");
     if (reservation === null)
@@ -62,6 +64,7 @@ export class SkyPageTable {
     this.stagedSlots = slots.slice();
     this.clearOffset = 0;
     this.entryOffset = 0;
+    this.edgeOffset = 0;
     this.prepared = false;
     this.submitted = true;
     void renderer;
@@ -84,12 +87,7 @@ export class SkyPageTable {
       const slot = this.stagedSlots[this.entryOffset++];
       const page = slot.page;
       if (!page) continue;
-      const rowsBefore =
-        page.tile.level === 16
-          ? 0
-          : page.tile.level === 32
-            ? this.width / 8
-            : (this.width * 3) / 8;
+      const rowsBefore = ((page.tile.level / 8 - 1) * this.width) / 16;
       const subdivisions = 2048 / this.core;
       const x = page.tile.column * subdivisions + page.x;
       const y = rowsBefore + page.tile.row * subdivisions + page.y;
@@ -97,6 +95,30 @@ export class SkyPageTable {
     }
     if (
       this.entryOffset < this.stagedSlots.length ||
+      performance.now() >= deadline
+    )
+      return;
+    while (
+      this.edgeOffset < this.stagedSlots.length &&
+      performance.now() < deadline
+    ) {
+      const page = this.stagedSlots[this.edgeOffset++].page;
+      if (!page) continue;
+      const offset = ((page.tile.level / 8 - 1) * this.width) / 16;
+      const divisions = 2048 / this.core;
+      const x = page.tile.column * divisions + page.x;
+      const y = page.tile.row * divisions + page.y;
+      data[((offset + y) * this.width + x) * 4 + 1] = coverageEdgeMask(
+        data,
+        this.width,
+        offset,
+        (page.tile.level * 1024) / this.core,
+        x,
+        y,
+      );
+    }
+    if (
+      this.edgeOffset < this.stagedSlots.length ||
       performance.now() >= deadline
     )
       return;

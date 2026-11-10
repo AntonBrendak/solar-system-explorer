@@ -14,6 +14,33 @@ export const IDLE_MS = 400;
 export const CANCEL_GRACE_MS = 500;
 export const MAIN_THREAD_MS = 1;
 
+export function chooseBaseSize(input: {
+  maxTextureSize: number;
+  ceiling: number;
+  cpuBytes: number;
+  gpuBytes: number;
+  globalFree: number;
+  streamingFree: number;
+  usable?: number;
+}) {
+  const usable = input.usable ?? SKY_USABLE;
+  const candidates = [8192, 4096, 2048].filter(
+    (size) =>
+      size <= input.maxTextureSize &&
+      size <= input.ceiling &&
+      ((size * size) / 2) * 12 + input.cpuBytes <= usable &&
+      baseBytes(size) <= Math.min(usable - input.gpuBytes, input.globalFree),
+  );
+  const groupBytes = pageBytes(1024) * 4;
+  return (
+    candidates.find(
+      (size) => baseBytes(size) + groupBytes <= input.streamingFree,
+    ) ??
+    candidates.find((size) => baseBytes(size) <= input.streamingFree) ??
+    candidates.find((size) => size === 2048)
+  );
+}
+
 export function physical(core: PageCore) {
   return core + 2 * GUTTER;
 }

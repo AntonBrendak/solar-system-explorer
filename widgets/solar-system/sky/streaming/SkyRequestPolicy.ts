@@ -11,7 +11,7 @@ export class SkyAssetError extends Error {
   }
 }
 
-export const isDetailKey = (key: string) => /^(16|32|64)\//.test(key);
+export const isDetailKey = (key: string) => /^(8|16|32|64)\//.test(key);
 
 /** A loader belongs to one immutable revision. Cancellation does not spend a retry. */
 export class SkyRequestPolicy {

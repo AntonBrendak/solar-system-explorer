@@ -20,4 +20,11 @@ const result = spawnSync(
   { stdio: "inherit" },
 );
 if (result.error) console.error(result.error.message);
-process.exit(result.status ?? 1);
+if (result.status !== 0) process.exit(result.status ?? 1);
+const coverage = spawnSync(
+  python,
+  ["scripts/restore_sky_atlas.py", "--coverage"],
+  { stdio: "inherit" },
+);
+if (coverage.error) console.error(coverage.error.message);
+process.exit(coverage.status ?? 1);

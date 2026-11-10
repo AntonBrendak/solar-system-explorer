@@ -2,6 +2,7 @@ import { SKY_USABLE } from "../model/sky-config";
 
 /** Counts owned buffers and conservative decoder reservations, never browser RSS. */
 export class SkyMemory {
+  constructor(public limit = SKY_USABLE) {}
   private next = 0;
   private reservations = new Map<number, { bytes: number; label: string }>();
   get bytes() {
@@ -11,7 +12,7 @@ export class SkyMemory {
     );
   }
   reserve(bytes: number, label: string): number | null {
-    if (bytes < 0 || this.bytes + bytes > SKY_USABLE) return null;
+    if (bytes < 0 || this.bytes + bytes > this.limit) return null;
     const id = ++this.next;
     this.reservations.set(id, { bytes, label });
     return id;
